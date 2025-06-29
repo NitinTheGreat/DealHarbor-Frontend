@@ -1,26 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Barlow+Semi+Condensed:wght@600&family=Poppins:wght@500&display=swap');
+
+@font-face {
+  font-family: "College";
+  src: url("/fonts/college.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: "College";
+  src: url("/fonts/collegeb.ttf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Rabelo";
+  src: url("/fonts/rabelo.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  --color-background: #FAF0E6 ;
+  --color-text: #333333;
+  --color-heading: #2D3748;
+  --color-subheading: #718096;
+  --color-link: #4299E1;
+  --color-button: #D97E96;
+  --color-button-hover: #E598AD;
+  --color-white: #FFFFFF;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-heading: "College", serif;
+  --font-subheading: "Rabelo", serif;
+  --font-body: "Inter", sans-serif;
+  --font-button: "Barlow Semi Condensed", sans-serif;
+  --font-link: "Poppins", sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
