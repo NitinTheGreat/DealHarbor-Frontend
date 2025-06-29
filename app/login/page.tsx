@@ -9,7 +9,7 @@ import { useEffect, useState, Suspense } from "react"
 import { toast } from "sonner"
 import { LoginPageSkeleton } from "@/components/ui/page-skeletons"
 import { loginAction, githubLoginAction } from "./actions"
-import { getUserState, saveUserState, clearUserState, setClientUser } from "@/lib/auth"
+import { clearUserState, setClientUser } from "@/lib/auth"
 
 function LoginForm() {
   const router = useRouter()
@@ -29,17 +29,6 @@ function LoginForm() {
     }
   }, [searchParams])
 
-  // Add this after the existing useEffect
-  useEffect(() => {
-    // Check if user just completed email verification and needs student verification
-    const userState = getUserState()
-    if (userState?.needsStudentVerification && searchParams.get("verified") === "true") {
-      toast.info("Please log in to continue with student verification.", {
-        duration: 5000,
-      })
-    }
-  }, [searchParams])
-
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setIsLoading(true)
@@ -49,9 +38,9 @@ function LoginForm() {
       formDataObj.append("email", formData.email)
       formDataObj.append("password", formData.password)
 
-      console.log("Attempting login for:", formData.email)
+      console.log("🔑 Attempting login for:", formData.email)
       const result = await loginAction(formDataObj)
-      console.log("Login result:", result)
+      console.log("📧 Login result:", result)
 
       if (result?.error) {
         toast.error(result.error)
@@ -65,26 +54,32 @@ function LoginForm() {
           setClientUser(result.user)
         }
 
-        // Check if user needs student verification
-        if (result.needsStudentVerification) {
-          console.log("User needs student verification, redirecting...")
+        // CRITICAL FIX: Use the backend's needsStudentVerification field
+        console.log("🎓 Backend says needsStudentVerification:", result.needsStudentVerification)
+        console.log("👤 User isStudentVerified:", result.user?.isStudentVerified)
 
-          // Update state for student verification
-          saveUserState({
-            step: "verify-student",
-            email: formData.email,
-            needsStudentVerification: true,
+        if (result.needsStudentVerification) {
+          console.log("➡️ Redirecting to student verification (backend says verification needed)")
+
+          toast.info("Please verify your student status to access all features.", {
+            duration: 3000,
           })
 
           router.push("/verify-student")
         } else {
-          console.log("User verified, redirecting to dashboard")
+          console.log("➡️ Redirecting to dashboard (user is already verified)")
+
+          toast.success("🚀 Welcome to DealHarbor! Redirecting to dashboard...", {
+            duration: 3000,
+          })
+
+          // Clear any existing state and redirect to dashboard
           clearUserState()
           router.push("/dashboard")
         }
       }
     } catch (error) {
-      console.error("Login error:", error)
+      console.error("💥 Login error:", error)
       toast.error("An unexpected error occurred. Please try again.")
     } finally {
       setIsLoading(false)

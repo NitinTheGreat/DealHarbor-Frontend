@@ -34,9 +34,9 @@ export async function verifyEmailAction(formData: FormData) {
 
         await setAuthCookies(loginResponse)
 
-        // Check if user needs student verification
-        const needsStudentVerification = !loginResponse.user.isStudentVerified
-        console.log("🎓 Needs student verification:", needsStudentVerification)
+        // CRITICAL FIX: Use the backend's needsStudentVerification field
+        const needsStudentVerification = loginResponse.needsStudentVerification
+        console.log("🎓 Backend says needsStudentVerification:", needsStudentVerification)
 
         return {
           success: true,

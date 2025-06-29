@@ -20,13 +20,15 @@ export async function loginAction(formData: FormData) {
 
   try {
     const loginResponse = await loginUser(email, password)
-    console.log("✅ Login successful for:", email, "User:", loginResponse.user)
+    console.log("✅ Login successful for:", email)
+    console.log("🎓 Backend response - needsStudentVerification:", loginResponse.needsStudentVerification)
+    console.log("👤 User isStudentVerified:", loginResponse.user.isStudentVerified)
 
     await setAuthCookies(loginResponse)
 
-    // Check if user needs student verification
-    const needsStudentVerification = !loginResponse.user.isStudentVerified
-    console.log("🎓 User needs student verification:", needsStudentVerification)
+    // CRITICAL FIX: Use the backend's needsStudentVerification field directly
+    const needsStudentVerification = loginResponse.needsStudentVerification
+    console.log("🎯 Final decision - needsStudentVerification:", needsStudentVerification)
 
     return {
       success: true,

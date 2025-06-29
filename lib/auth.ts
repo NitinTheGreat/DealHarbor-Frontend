@@ -6,6 +6,7 @@ export interface LoginResponse {
   refreshToken: string
   tokenType: string
   expiresIn: number
+  needsStudentVerification: boolean // Added this field
   user: {
     id: string
     firstName: string
