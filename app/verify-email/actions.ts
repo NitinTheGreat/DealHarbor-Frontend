@@ -1,12 +1,15 @@
 // app/verify-email/actions.ts
 "use server"
 
-import { redirect } from "next/navigation"
-import { verifyEmail, resendOTP } from "@/lib/auth"
+import { verifyEmail, resendOTP, loginUser } from "@/lib/auth"
+import { setAuthCookies } from "@/lib/auth-server"
 
 export async function verifyEmailAction(formData: FormData) {
   const email = formData.get("email") as string
   const otp = formData.get("otp") as string
+  const password = formData.get("password") as string // For auto-login
+
+  console.log("🔐 Verify email action called for:", email, "with OTP:", otp, "password provided:", !!password)
 
   if (!email || !otp) {
     return { error: "Please enter the verification code" }
@@ -17,9 +20,47 @@ export async function verifyEmailAction(formData: FormData) {
   }
 
   try {
+    // First verify the email
+    console.log("📧 Starting email verification...")
     const response = await verifyEmail(email, otp)
-    redirect(`/login?verified=true&message=${encodeURIComponent(response.message)}`)
+    console.log("✅ Email verification response:", response)
+
+    // If password is provided, attempt auto-login
+    if (password) {
+      try {
+        console.log("🔑 Attempting auto-login for:", email)
+        const loginResponse = await loginUser(email, password)
+        console.log("✅ Auto-login successful:", loginResponse)
+
+        await setAuthCookies(loginResponse)
+
+        // Check if user needs student verification
+        const needsStudentVerification = !loginResponse.user.isStudentVerified
+        console.log("🎓 Needs student verification:", needsStudentVerification)
+
+        return {
+          success: true,
+          message: "Email verified and logged in successfully!",
+          autoLogin: true,
+          needsStudentVerification,
+          user: loginResponse.user,
+        }
+      } catch (loginError) {
+        console.error("❌ Auto-login failed:", loginError)
+        // If auto-login fails, still consider verification successful but don't auto-login
+        return {
+          success: true,
+          message: response.message,
+          autoLogin: false,
+          needsStudentVerification: true, // Assume needs verification for non-auto-login
+        }
+      }
+    }
+
+    console.log("✅ Email verification completed without auto-login")
+    return { success: true, message: response.message, autoLogin: false }
   } catch (error) {
+    console.error("💥 Email verification error:", error)
     let errorMessage = "Verification failed. Please try again."
 
     if (error instanceof Error) {
@@ -42,14 +83,18 @@ export async function verifyEmailAction(formData: FormData) {
 export async function resendOTPAction(formData: FormData) {
   const email = formData.get("email") as string
 
+  console.log("📧 Resend OTP action called for:", email)
+
   if (!email) {
     return { error: "Email is required" }
   }
 
   try {
     const response = await resendOTP(email)
+    console.log("✅ Resend OTP successful:", response)
     return { success: response.message }
   } catch (error) {
+    console.error("💥 Resend OTP error:", error)
     let errorMessage = "Failed to resend verification code."
 
     if (error instanceof Error) {

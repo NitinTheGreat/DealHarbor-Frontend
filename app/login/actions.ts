@@ -1,30 +1,40 @@
 // app/login/actions.ts
 "use server"
 
-import { redirect } from "next/navigation"
-import { loginUser, setAuthCookies } from "@/lib/auth"
+import { loginUser } from "@/lib/auth"
+import { setAuthCookies } from "@/lib/auth-server"
 
 export async function loginAction(formData: FormData) {
   const email = formData.get("email") as string
   const password = formData.get("password") as string
 
+  console.log("🔑 Login action called for:", email)
+
   if (!email || !password) {
     return { error: "Please enter both email and password" }
   }
 
-  // Basic email validation
   if (!email.includes("@")) {
     return { error: "Please enter a valid email address" }
   }
 
   try {
     const loginResponse = await loginUser(email, password)
+    console.log("✅ Login successful for:", email, "User:", loginResponse.user)
+
     await setAuthCookies(loginResponse)
 
-    // Redirect to dashboard or home page after successful login
-    redirect("/dashboard")
+    // Check if user needs student verification
+    const needsStudentVerification = !loginResponse.user.isStudentVerified
+    console.log("🎓 User needs student verification:", needsStudentVerification)
+
+    return {
+      success: true,
+      needsStudentVerification,
+      user: loginResponse.user,
+    }
   } catch (error) {
-    // Parse and return user-friendly error messages
+    console.error("💥 Login error:", error)
     let errorMessage = "Login failed. Please try again."
 
     if (error instanceof Error) {
@@ -43,5 +53,15 @@ export async function loginAction(formData: FormData) {
     }
 
     return { error: errorMessage }
+  }
+}
+
+export async function githubLoginAction() {
+  try {
+    const { githubLogin } = await import("@/lib/auth")
+    const response = await githubLogin()
+    return { success: true, redirectUrl: response.redirectUrl }
+  } catch (error) {
+    return { error: "Failed to initiate GitHub login" }
   }
 }

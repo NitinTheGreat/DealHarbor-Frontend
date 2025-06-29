@@ -1,18 +1,22 @@
 // app/signup/actions.ts
 "use server"
 
-import { redirect } from "next/navigation"
-import { registerUser } from "@/lib/auth"
+import { registerUser, checkEmailExists } from "@/lib/auth"
 
 export async function signupAction(formData: FormData) {
   const firstName = formData.get("firstName") as string
+  const middleName = formData.get("middleName") as string
   const lastName = formData.get("lastName") as string
   const email = formData.get("email") as string
+  const phoneNumber = formData.get("phoneNumber") as string
   const password = formData.get("password") as string
   const confirmPassword = formData.get("confirmPassword") as string
 
+  console.log("📝 Signup action called for:", email)
+
   // Validation
   if (!firstName || !lastName || !email || !password) {
+    console.error("❌ Missing required fields")
     return { error: "Please fill in all required fields" }
   }
 
@@ -26,6 +30,10 @@ export async function signupAction(formData: FormData) {
 
   if (!email.includes("@")) {
     return { error: "Please enter a valid email address" }
+  }
+
+  if (phoneNumber && !/^\+?[\d\s\-()]{10,15}$/.test(phoneNumber)) {
+    return { error: "Please enter a valid phone number" }
   }
 
   if (password !== confirmPassword) {
@@ -48,25 +56,54 @@ export async function signupAction(formData: FormData) {
   }
 
   try {
-    // Combine firstName and lastName into name field as expected by backend
-    const userData = {
-      name: `${firstName.trim()} ${lastName.trim()}`,
-      email: email.trim().toLowerCase(),
-      password,
+    console.log("🔍 Checking if email exists:", email)
+
+    // Check if email already exists and is verified
+    const emailCheck = await checkEmailExists(email.trim().toLowerCase())
+    console.log("📧 Email check result:", emailCheck)
+
+    if (emailCheck.exists && emailCheck.verified) {
+      console.log("⚠️ Email already exists and is verified")
+      return {
+        error: "An account with this email already exists and is verified. Please log in instead.",
+        redirectToLogin: true,
+      }
     }
 
-    const response = await registerUser(userData)
+    // Build full name
+    const fullName = middleName
+      ? `${firstName.trim()} ${middleName.trim()} ${lastName.trim()}`
+      : `${firstName.trim()} ${lastName.trim()}`
 
-    // Redirect to verification page with email and success message
-    redirect(`/verify-email?email=${encodeURIComponent(email)}&message=${encodeURIComponent(response.message)}`)
+    const userData = {
+      name: fullName,
+      email: email.trim().toLowerCase(),
+      password,
+      ...(phoneNumber && { phoneNumber: phoneNumber.trim() }),
+    }
+
+    console.log("🚀 Registering user with data:", { ...userData, password: "[HIDDEN]" })
+    const response = await registerUser(userData)
+    console.log("✅ Registration successful:", response)
+
+    return {
+      success: true,
+      message: response.message,
+      email: email.trim().toLowerCase(),
+      isAutoVerified: response.isAutoVerified || false,
+    }
   } catch (error) {
-    // Parse and return user-friendly error messages
+    console.error("💥 Signup error:", error)
+
     let errorMessage = "Registration failed. Please try again."
 
     if (error instanceof Error) {
       const message = error.message.toLowerCase()
       if (message.includes("email already exists") || message.includes("already registered")) {
-        errorMessage = "An account with this email already exists. Try logging in instead."
+        return {
+          error: "An account with this email already exists. Try logging in instead.",
+          redirectToLogin: true,
+        }
       } else if (message.includes("invalid email")) {
         errorMessage = "Please enter a valid email address."
       } else if (message.includes("weak password")) {
