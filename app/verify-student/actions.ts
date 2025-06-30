@@ -2,16 +2,24 @@
 
 import { cookies } from "next/headers"
 
-interface SendOtpRequest {
-  studentEmail: string
-}
-
-interface VerifyOtpRequest {
-  studentEmail: string
-  otp: string
+interface User {
+  id: string
+  name: string
+  email: string
+  isVerifiedStudent: boolean
+  profilePhotoUrl?: string
+  phoneNumber?: string
+  bio?: string
+  universityEmail?: string
   universityId?: string
-  graduationYear?: number
   department?: string
+  graduationYear?: number
+  totalListings?: number
+  totalSales?: number
+  totalPurchases?: number
+  overallRating?: number
+  sellerBadge?: string
+  sellerRating?: number
 }
 
 interface ApiResponse<T> {
@@ -20,9 +28,21 @@ interface ApiResponse<T> {
   error?: string
 }
 
+interface StudentOtpRequest {
+  studentEmail: string
+}
+
+interface StudentOtpVerifyRequest {
+  studentEmail: string
+  otp: string
+  universityId?: string
+  graduationYear?: number
+  department?: string
+}
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
-export async function sendStudentOtp(request: SendOtpRequest): Promise<ApiResponse<string>> {
+export async function getCurrentUser(): Promise<ApiResponse<User>> {
   try {
     const cookieStore = await cookies()
     const accessToken = cookieStore.get("access_token")?.value
@@ -30,7 +50,48 @@ export async function sendStudentOtp(request: SendOtpRequest): Promise<ApiRespon
     if (!accessToken) {
       return {
         success: false,
-        error: "Authentication required. Please log in again.",
+        error: "Not authenticated",
+      }
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: "Failed to get user data",
+      }
+    }
+
+    const userData = await response.json()
+
+    return {
+      success: true,
+      data: userData,
+    }
+  } catch (error) {
+    console.error("Get current user error:", error)
+    return {
+      success: false,
+      error: "Network error",
+    }
+  }
+}
+
+export async function sendStudentOtp(request: StudentOtpRequest): Promise<ApiResponse<string>> {
+  try {
+    const cookieStore = await cookies()
+    const accessToken = cookieStore.get("access_token")?.value
+
+    if (!accessToken) {
+      return {
+        success: false,
+        error: "Not authenticated",
       }
     }
 
@@ -45,38 +106,9 @@ export async function sendStudentOtp(request: SendOtpRequest): Promise<ApiRespon
 
     if (!response.ok) {
       const errorText = await response.text()
-
-      if (response.status === 401) {
-        return {
-          success: false,
-          error: "Session expired. Please log in again.",
-        }
-      }
-
-      if (response.status === 400) {
-        if (errorText.includes("Invalid student email")) {
-          return {
-            success: false,
-            error: "Please enter a valid VIT email address (@vitstudent.ac.in, @vit.ac.in, or @vitchennai.ac.in)",
-          }
-        }
-        if (errorText.includes("already verified")) {
-          return {
-            success: false,
-            error: "This student email is already verified by another user.",
-          }
-        }
-        if (errorText.includes("already verified with a different email")) {
-          return {
-            success: false,
-            error: "You are already verified with a different student email.",
-          }
-        }
-      }
-
       return {
         success: false,
-        error: errorText || "Failed to send OTP. Please try again.",
+        error: errorText || "Failed to send OTP",
       }
     }
 
@@ -86,15 +118,15 @@ export async function sendStudentOtp(request: SendOtpRequest): Promise<ApiRespon
       data: message,
     }
   } catch (error) {
-    console.error("Send OTP error:", error)
+    console.error("Send student OTP error:", error)
     return {
       success: false,
-      error: "Network error. Please check your connection and try again.",
+      error: "Network error. Please try again.",
     }
   }
 }
 
-export async function verifyStudentOtp(request: VerifyOtpRequest): Promise<ApiResponse<string>> {
+export async function verifyStudentOtp(request: StudentOtpVerifyRequest): Promise<ApiResponse<string>> {
   try {
     const cookieStore = await cookies()
     const accessToken = cookieStore.get("access_token")?.value
@@ -102,7 +134,7 @@ export async function verifyStudentOtp(request: VerifyOtpRequest): Promise<ApiRe
     if (!accessToken) {
       return {
         success: false,
-        error: "Authentication required. Please log in again.",
+        error: "Not authenticated",
       }
     }
 
@@ -117,38 +149,9 @@ export async function verifyStudentOtp(request: VerifyOtpRequest): Promise<ApiRe
 
     if (!response.ok) {
       const errorText = await response.text()
-
-      if (response.status === 401) {
-        return {
-          success: false,
-          error: "Session expired. Please log in again.",
-        }
-      }
-
-      if (response.status === 400) {
-        if (errorText.includes("Invalid OTP")) {
-          return {
-            success: false,
-            error: "Invalid OTP. Please check the code and try again.",
-          }
-        }
-        if (errorText.includes("OTP expired")) {
-          return {
-            success: false,
-            error: "OTP has expired. Please request a new one.",
-          }
-        }
-        if (errorText.includes("already verified")) {
-          return {
-            success: false,
-            error: "This student email is already verified by another user.",
-          }
-        }
-      }
-
       return {
         success: false,
-        error: errorText || "Failed to verify OTP. Please try again.",
+        error: errorText || "Failed to verify OTP",
       }
     }
 
@@ -158,57 +161,10 @@ export async function verifyStudentOtp(request: VerifyOtpRequest): Promise<ApiRe
       data: message,
     }
   } catch (error) {
-    console.error("Verify OTP error:", error)
+    console.error("Verify student OTP error:", error)
     return {
       success: false,
-      error: "Network error. Please check your connection and try again.",
-    }
-  }
-}
-
-export async function getCurrentUser(): Promise<ApiResponse<any>> {
-  try {
-    const cookieStore = await cookies()
-    const accessToken = cookieStore.get("access_token")?.value
-
-    if (!accessToken) {
-      return {
-        success: false,
-        error: "Authentication required. Please log in again.",
-      }
-    }
-
-    const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    })
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        return {
-          success: false,
-          error: "Session expired. Please log in again.",
-        }
-      }
-
-      return {
-        success: false,
-        error: "Failed to get user information.",
-      }
-    }
-
-    const userData = await response.json()
-    return {
-      success: true,
-      data: userData,
-    }
-  } catch (error) {
-    console.error("Get current user error:", error)
-    return {
-      success: false,
-      error: "Network error. Please check your connection and try again.",
+      error: "Network error. Please try again.",
     }
   }
 }

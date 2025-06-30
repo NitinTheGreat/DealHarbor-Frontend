@@ -39,6 +39,7 @@ interface EmailCheckResponse {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
+
 export async function loginUser(
   credentials: LoginRequest,
 ): Promise<ApiResponse<LoginResponse> & { needsStudentVerification?: boolean; redirectToSignup?: boolean }> {
@@ -57,7 +58,6 @@ export async function loginUser(
     if (!response.ok) {
       const errorText = await response.text()
 
-      // Handle specific error cases
       if (errorText.includes("REDIRECT_TO_SIGNUP")) {
         return {
           success: false,
@@ -66,17 +66,10 @@ export async function loginUser(
         }
       }
 
-      if (response.status === 400) {
+      if (response.status === 400 || response.status === 401) {
         return {
           success: false,
           error: errorText || "Invalid credentials. Please check your email and password.",
-        }
-      }
-
-      if (response.status === 401) {
-        return {
-          success: false,
-          error: "Invalid credentials. Please check your email and password.",
         }
       }
 
@@ -95,7 +88,7 @@ export async function loginUser(
 
     const data: LoginResponse = await response.json()
 
-    // Set secure HTTP-only cookies
+    // Set cookies as before
     const cookieStore = await cookies()
     const maxAge = credentials.rememberMe ? 30 * 24 * 60 * 60 : 24 * 60 * 60 // 30 days or 1 day
 
@@ -116,17 +109,40 @@ export async function loginUser(
     })
 
     cookieStore.set("user_data", JSON.stringify(data.user), {
-      httpOnly: false, // Allow client-side access for user info
+      httpOnly: false,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: maxAge,
       path: "/",
     })
+console.log("about to fetch /api/auth/me")
+    // Call /api/auth/me to get updated is_verified_student status
+    const meResponse = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${data.accessToken}`,
+      },
+    })
+
+    let isVerifiedStudent = data.user.isStudentVerified
+    if (meResponse.ok) {
+      console.log("Fetching student verification status from /api/auth/me")
+      console.log(meResponse)
+      const meData = await meResponse.json()
+      console.log("Response from /api/auth/me:", meData)
+      // Assuming the API returns { is_verified_student: boolean }
+      if (typeof meData.verifiedStudent === "boolean") {
+        isVerifiedStudent = meData.verifiedStudent
+      }
+    } else {
+      // If /me API fails, fallback to current user info
+      console.warn("Failed to fetch student verification status from /api/auth/me")
+    }
 
     return {
       success: true,
       data,
-      needsStudentVerification: data.needsStudentVerification || !data.user.isStudentVerified,
+      needsStudentVerification: !isVerifiedStudent,
     }
   } catch (error) {
     console.error("Login API error:", error)
@@ -136,6 +152,7 @@ export async function loginUser(
     }
   }
 }
+
 
 export async function checkEmailExists(email: string): Promise<EmailCheckResponse> {
   try {

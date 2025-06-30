@@ -136,13 +136,18 @@ export default function LoginForm() {
           toast.success("Welcome back! Signing you in...")
 
           // Check if student verification is needed
-          if (result.needsStudentVerification) {
-            router.push("/verify-student?from=login")
-            return
-          }
+          // if (result.needsStudentVerification) {
+          //   router.push("/verify-student?from=login")
+          //   return
+          // }
+            // Check if student verification is needed
+            if (result.needsStudentVerification) {
+            router.push("/verify-student?from=login");
+            return;
+            }
 
-          // Redirect to intended page or dashboard
-          const redirectTo = redirectFrom || "/dashboard"
+          // Redirect to intended page or profile
+          const redirectTo = redirectFrom || "/profile"
           router.push(redirectTo)
         } else if (result.redirectToSignup) {
           // Redirect to signup with email prefilled
