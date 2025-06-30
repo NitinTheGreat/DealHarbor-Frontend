@@ -1,4 +1,3 @@
-// app/login/actions.ts
 "use server"
 
 import { cookies } from "next/headers"
@@ -30,6 +29,7 @@ interface ApiResponse<T> {
   success: boolean
   data?: T
   error?: string
+  redirectToSignup?: boolean
 }
 
 interface EmailCheckResponse {
@@ -41,7 +41,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
 export async function loginUser(
   credentials: LoginRequest,
-): Promise<ApiResponse<LoginResponse> & { needsStudentVerification?: boolean }> {
+): Promise<ApiResponse<LoginResponse> & { needsStudentVerification?: boolean; redirectToSignup?: boolean }> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: "POST",
@@ -58,6 +58,14 @@ export async function loginUser(
       const errorText = await response.text()
 
       // Handle specific error cases
+      if (errorText.includes("REDIRECT_TO_SIGNUP")) {
+        return {
+          success: false,
+          redirectToSignup: true,
+          error: "No account found with this email. Please sign up first.",
+        }
+      }
+
       if (response.status === 400) {
         return {
           success: false,
@@ -146,12 +154,10 @@ export async function checkEmailExists(email: string): Promise<EmailCheckRespons
     const data = await response.json()
     console.log("Raw API response:", data) // Debug log
 
-    // Backend returns: { available: boolean, verified: boolean }
-    // available: true means email is available (doesn't exist)
-    // available: false means email is not available (exists)
+    // Backend returns: { exists: boolean, verified: boolean }
     const result = {
-      exists: !data.available, // Invert the logic: if not available, it exists
-      verified: data.verified || false,
+      exists: data.exists,
+      verified: data.verified,
     }
 
     console.log("Processed result:", result) // Debug log

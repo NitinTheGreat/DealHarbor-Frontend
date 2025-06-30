@@ -1,4 +1,3 @@
-// app/login/components/LoginForm.tsx
 "use client"
 
 import type React from "react"
@@ -57,49 +56,8 @@ export default function LoginForm() {
     return emailRegex.test(email)
   }
 
-  const isValidEmailDomain = (email: string): boolean => {
-    const allowedDomains = [
-      // Common email providers
-      "gmail.com",
-      "outlook.com",
-      "hotmail.com",
-      "yahoo.com",
-      "icloud.com",
-      // University domains (VIT and common patterns)
-      "vitstudent.ac.in",
-      "vit.ac.in",
-      "vit.edu",
-      "student.vit.ac.in",
-      // Common university patterns
-      ".edu",
-      ".ac.in",
-      ".edu.in",
-      ".ac.uk",
-      ".edu.au",
-    ]
-
-    const domain = email.split("@")[1]?.toLowerCase()
-    if (!domain) return false
-
-    // Check exact matches
-    if (allowedDomains.includes(domain)) return true
-
-    // Check pattern matches (ends with)
-    return allowedDomains.some((pattern) => pattern.startsWith(".") && domain.endsWith(pattern))
-  }
-
   const handleEmailBlur = async () => {
     if (formData.email && validateEmail(formData.email)) {
-      // First check if it's a valid domain
-      if (!isValidEmailDomain(formData.email)) {
-        setEmailCheckStatus("not-exists")
-        setErrors((prev) => ({
-          ...prev,
-          email: "Please use a valid email domain (gmail.com, outlook.com, or university email).",
-        }))
-        return
-      }
-
       setEmailCheckStatus("checking")
       try {
         const response = await checkEmailExists(formData.email)
@@ -147,8 +105,6 @@ export default function LoginForm() {
       newErrors.email = "Email is required"
     } else if (!validateEmail(formData.email)) {
       newErrors.email = "Please enter a valid email address"
-    } else if (!isValidEmailDomain(formData.email)) {
-      newErrors.email = "Please use a valid email domain (gmail.com, outlook.com, or university email)"
     }
 
     if (!formData.password) {
@@ -188,6 +144,12 @@ export default function LoginForm() {
           // Redirect to intended page or dashboard
           const redirectTo = redirectFrom || "/dashboard"
           router.push(redirectTo)
+        } else if (result.redirectToSignup) {
+          // Redirect to signup with email prefilled
+          const params = new URLSearchParams()
+          params.set("email", formData.email)
+          if (redirectFrom) params.set("from", redirectFrom)
+          router.push(`/signup?${params.toString()}`)
         } else {
           setErrors({ general: result.error || "Login failed. Please try again." })
           toast.error(result.error || "Login failed. Please try again.")
@@ -229,8 +191,8 @@ export default function LoginForm() {
           Email Address
         </label>
         <div className="relative group">
-           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Mail className="h-5 w-5 text-gray-400" />
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Mail className="h-5 w-5 text-gray-600 group-focus-within:text-button transition-colors" />
           </div>
           <input
             id="email"
@@ -238,8 +200,10 @@ export default function LoginForm() {
             value={formData.email}
             onChange={(e) => handleInputChange("email", e.target.value)}
             onBlur={handleEmailBlur}
-            className={`w-full pl-10 pr-10 py-3 border rounded-lg font-body text-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-button focus:border-transparent transition-colors ${
-              errors.email ? "border-red-300 bg-red-50" : "border-gray-300 bg-white"
+            className={`w-full pl-12 pr-12 py-4 border-2 rounded-xl font-body text-text placeholder-gray-500 focus:outline-none focus:ring-0 focus:border-button transition-all duration-200 bg-white/80 backdrop-blur-sm ${
+              errors.email
+                ? "border-red-300 bg-red-50/50 focus:border-red-400"
+                : "border-gray-300 hover:border-gray-400 focus:border-button"
             }`}
             placeholder="Enter your email address"
             disabled={isPending}
@@ -261,7 +225,7 @@ export default function LoginForm() {
               <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
               <p className="text-sm text-red-600 font-body">{errors.email}</p>
             </div>
-            {emailCheckStatus === "not-exists" && !errors.email.includes("domain") && (
+            {emailCheckStatus === "not-exists" && (
               <button
                 type="button"
                 onClick={handleSignUpRedirect}
@@ -280,16 +244,18 @@ export default function LoginForm() {
           Password
         </label>
         <div className="relative group">
-           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Lock className="h-5 w-5 text-gray-400" />
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Lock className="h-5 w-5 text-gray-600 group-focus-within:text-button transition-colors" />
           </div>
           <input
             id="password"
             type={showPassword ? "text" : "password"}
             value={formData.password}
             onChange={(e) => handleInputChange("password", e.target.value)}
-            className={`w-full pl-10 pr-10 py-3 border rounded-lg font-body text-text placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-button focus:border-transparent transition-colors ${
-              errors.password ? "border-red-300 bg-red-50" : "border-gray-300 bg-white"
+            className={`w-full pl-12 pr-12 py-4 border-2 rounded-xl font-body text-text placeholder-gray-500 focus:outline-none focus:ring-0 focus:border-button transition-all duration-200 bg-white/80 backdrop-blur-sm ${
+              errors.password
+                ? "border-red-300 bg-red-50/50 focus:border-red-400"
+                : "border-gray-300 hover:border-gray-400 focus:border-button"
             }`}
             placeholder="Enter your password"
             disabled={isPending}
@@ -297,7 +263,7 @@ export default function LoginForm() {
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+            className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-600 hover:text-gray-900 transition-colors"
             disabled={isPending}
           >
             {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -337,7 +303,7 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={isPending || emailCheckStatus === "checking"}
-        className="w-full cursor-pointer py-4 px-6 bg-gradient-to-r from-button to-button-hover text-white font-button font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-button/30 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] relative overflow-hidden group"
+        className="w-full py-4 px-6 bg-gradient-to-r from-button to-button-hover text-white font-button font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-button/30 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] relative overflow-hidden group"
       >
         <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
         {isPending ? (
@@ -346,9 +312,9 @@ export default function LoginForm() {
             <span>Signing in...</span>
           </div>
         ) : (
-          <div className="flex items-center justify-center space-x-2 cursor-pointer">
+          <div className="flex items-center justify-center space-x-2">
             <span>Sign In</span>
-            {/* <Sparkles className="h-4 w-4" />s */}
+            <Sparkles className="h-4 w-4" />
           </div>
         )}
       </button>
@@ -369,7 +335,7 @@ export default function LoginForm() {
           className="py-3 px-4 border-2 border-gray-300 rounded-xl font-body text-text hover:bg-white/80 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 disabled:opacity-50 hover:shadow-md group bg-white/60 backdrop-blur-sm"
           disabled={isPending}
         >
-          <div className="flex items-center justify-center space-x-2 cursor-pointer">
+          <div className="flex items-center justify-center space-x-2">
             <svg className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
@@ -397,7 +363,7 @@ export default function LoginForm() {
           className="py-3 px-4 border-2 border-gray-300 rounded-xl font-body text-text hover:bg-white/80 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 disabled:opacity-50 hover:shadow-md group bg-white/60 backdrop-blur-sm"
           disabled={isPending}
         >
-          <div className="flex items-center justify-center space-x-2 cursor-pointer">
+          <div className="flex items-center justify-center space-x-2">
             <svg className="h-5 w-5 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
             </svg>
