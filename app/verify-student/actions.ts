@@ -1,7 +1,5 @@
 "use server"
 
-import { cookies } from "next/headers"
-
 interface User {
   id: string
   name: string
@@ -44,21 +42,13 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
 export async function getCurrentUser(): Promise<ApiResponse<User>> {
   try {
-    const cookieStore = await cookies()
-    const accessToken = cookieStore.get("access_token")?.value
-
-    if (!accessToken) {
-      return {
-        success: false,
-        error: "Not authenticated",
-      }
-    }
-
     const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
       method: "GET",
+      credentials: "include", // Important: includes session cookie
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/json",
       },
+      cache: "no-store",
     })
 
     if (!response.ok) {
@@ -85,22 +75,12 @@ export async function getCurrentUser(): Promise<ApiResponse<User>> {
 
 export async function sendStudentOtp(request: StudentOtpRequest): Promise<ApiResponse<string>> {
   try {
-    const cookieStore = await cookies()
-    const accessToken = cookieStore.get("access_token")?.value
-
-    if (!accessToken) {
-      return {
-        success: false,
-        error: "Not authenticated",
-      }
-    }
-
     const response = await fetch(`${API_BASE_URL}/api/student-verification/send-otp`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
       },
+      credentials: "include", // Important: includes session cookie
       body: JSON.stringify(request),
     })
 
@@ -128,22 +108,12 @@ export async function sendStudentOtp(request: StudentOtpRequest): Promise<ApiRes
 
 export async function verifyStudentOtp(request: StudentOtpVerifyRequest): Promise<ApiResponse<string>> {
   try {
-    const cookieStore = await cookies()
-    const accessToken = cookieStore.get("access_token")?.value
-
-    if (!accessToken) {
-      return {
-        success: false,
-        error: "Not authenticated",
-      }
-    }
-
     const response = await fetch(`${API_BASE_URL}/api/student-verification/verify-otp`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
       },
+      credentials: "include", // Important: includes session cookie
       body: JSON.stringify(request),
     })
 
