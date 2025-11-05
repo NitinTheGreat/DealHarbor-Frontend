@@ -1,10 +1,12 @@
 "use server"
 
+import { headers as nextHeaders } from "next/headers"
+
 interface User {
   id: string
   name: string
   email: string
-  isVerifiedStudent: boolean
+  isStudentVerified: boolean
   profilePhotoUrl?: string
   phoneNumber?: string
   bio?: string
@@ -40,13 +42,21 @@ interface StudentOtpVerifyRequest {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
+async function buildCookieHeader(): Promise<string | undefined> {
+  // Use incoming request headers to get the cookie string (works in server actions)
+  const hdrs = await nextHeaders()
+  const cookieHeader = hdrs.get("cookie") || undefined
+  return cookieHeader
+}
+
 export async function getCurrentUser(): Promise<ApiResponse<User>> {
   try {
+  const cookieHeader = await buildCookieHeader()
     const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
       method: "GET",
-      credentials: "include", // Important: includes session cookie
       headers: {
         Accept: "application/json",
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       },
       cache: "no-store",
     })
@@ -75,12 +85,13 @@ export async function getCurrentUser(): Promise<ApiResponse<User>> {
 
 export async function sendStudentOtp(request: StudentOtpRequest): Promise<ApiResponse<string>> {
   try {
+  const cookieHeader = await buildCookieHeader()
     const response = await fetch(`${API_BASE_URL}/api/student-verification/send-otp`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       },
-      credentials: "include", // Important: includes session cookie
       body: JSON.stringify(request),
     })
 
@@ -108,12 +119,13 @@ export async function sendStudentOtp(request: StudentOtpRequest): Promise<ApiRes
 
 export async function verifyStudentOtp(request: StudentOtpVerifyRequest): Promise<ApiResponse<string>> {
   try {
+  const cookieHeader = await buildCookieHeader()
     const response = await fetch(`${API_BASE_URL}/api/student-verification/verify-otp`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
       },
-      credentials: "include", // Important: includes session cookie
       body: JSON.stringify(request),
     })
 
