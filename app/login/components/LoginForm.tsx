@@ -4,8 +4,9 @@ import type React from "react"
 import { useState, useEffect, useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle, Sparkles, X } from "lucide-react"
-import { loginUser, checkEmailExists } from "../actions"
+import { checkEmailExists } from "../actions"
 import { toast } from "sonner"
+import { useAuth } from "@/components/ClientAuth"
 
 interface LoginFormData {
   email: string
@@ -23,6 +24,7 @@ export default function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
+  const { checkAuthStatus } = useAuth()
 
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
@@ -126,41 +128,53 @@ export default function LoginForm() {
       setErrors({})
 
       try {
-        const result = await loginUser({
-          email: formData.email,
-          password: formData.password,
-          rememberMe: formData.rememberMe,
+        // Perform login via same-origin API to ensure Set-Cookie reaches the browser
+        console.log("LoginForm: Calling /api/auth/login")
+        const res = await fetch(`/api/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+          }),
         })
 
-        if (result.success) {
+        console.log("LoginForm: Login response status:", res.status)
+
+        if (res.ok) {
           toast.success("Welcome back! Signing you in...")
 
-          // Check if student verification is needed
-          // if (result.needsStudentVerification) {
-          //   router.push("/verify-student?from=login")
-          //   return
-          // }
-            // Check if student verification is needed
-            if (result.needsStudentVerification) {
-            router.push("/verify-student?from=login");
-            return;
-            }
+          // Refresh auth state in the global context and wait for it to complete
+          console.log("LoginForm: Calling checkAuthStatus after successful login")
+          const authUser = await checkAuthStatus()
+          console.log("LoginForm: Auth status check completed, user:", authUser)
 
-          // Redirect to intended page or profile
-          const redirectTo = redirectFrom || "/profile"
-          router.push(redirectTo)
-        } else if (result.redirectToSignup) {
+          if (authUser) {
+            console.log("LoginForm: User authenticated, navigating to profile")
+            // Now navigate
+            const redirectTo = redirectFrom || "/profile"
+            router.push(redirectTo)
+          } else {
+            console.error("LoginForm: Failed to verify auth after login")
+            toast.error("Authentication verification failed. Please try logging in again.")
+          }
+        } else if (res.status === 404) {
           // Redirect to signup with email prefilled
           const params = new URLSearchParams()
           params.set("email", formData.email)
           if (redirectFrom) params.set("from", redirectFrom)
           router.push(`/signup?${params.toString()}`)
         } else {
-          setErrors({ general: result.error || "Login failed. Please try again." })
-          toast.error(result.error || "Login failed. Please try again.")
+          const errorText = await res.text()
+          const message = errorText || "Login failed. Please try again."
+          setErrors({ general: message })
+          toast.error(message)
         }
       } catch (error) {
-        console.error("Login error:", error)
+        console.error("Login error details:", error)
+        console.error("Error stack:", error instanceof Error ? error.stack : "No stack")
+        console.error("Error message:", error instanceof Error ? error.message : String(error))
         const errorMessage = "An unexpected error occurred. Please try again."
         setErrors({ general: errorMessage })
         toast.error(errorMessage)

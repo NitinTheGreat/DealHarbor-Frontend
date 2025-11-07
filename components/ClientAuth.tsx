@@ -18,7 +18,8 @@ interface User {
 interface AuthContextType {
   user: User | null
   isLoading: boolean
-  logout: () => void
+  checkAuthStatus: () => Promise<User | null>
+  logout: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -27,33 +28,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-    // Get user data from cookie (non-httpOnly cookie for client access)
-    const getUserFromCookie = () => {
-      try {
-        const userDataCookie = document.cookie
-          .split("; ")
-          .find((row) => row.startsWith("user_data="))
-          ?.split("=")[1]
+  const checkAuthStatus = async () => {
+    setIsLoading(true)
+    try {
+      console.log("ClientAuth: Checking auth status...")
+      
+      const response = await fetch("/api/auth/me", {
+        method: "GET",
+        credentials: "include", // Important: includes session cookie
+        headers: {
+          Accept: "application/json",
+        },
+      })
 
-        if (userDataCookie) {
-          const userData = JSON.parse(decodeURIComponent(userDataCookie))
-          setUser(userData)
-        }
-      } catch (error) {
-        console.error("Error parsing user data:", error)
-      } finally {
-        setIsLoading(false)
+      console.log("ClientAuth: Response status:", response.status)
+      console.log("ClientAuth: Response headers:", Object.fromEntries(response.headers.entries()))
+
+      if (response.ok) {
+        const userData = await response.json()
+        console.log("ClientAuth: User authenticated:", userData)
+        setUser(userData)
+        return userData
+      } else {
+        const errorText = await response.text()
+        console.log("ClientAuth: No user found (status:", response.status, ")", errorText)
+        setUser(null)
+        return null
       }
+    } catch (error) {
+      console.error("ClientAuth: Error checking auth status:", error)
+      setUser(null)
+      return null
+    } finally {
+      setIsLoading(false)
+      console.log("ClientAuth: Auth check complete")
     }
+  }
 
-    getUserFromCookie()
+  useEffect(() => {
+    checkAuthStatus()
   }, [])
 
   const logout = async () => {
     try {
       await fetch("/api/auth/logout", {
         method: "POST",
+        credentials: "include", // Important: includes session cookie
       })
 
       setUser(null)
@@ -66,7 +86,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  return <AuthContext.Provider value={{ user, isLoading, logout }}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={{ user, isLoading, checkAuthStatus, logout }}>
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
 export function useAuth() {

@@ -1,5 +1,4 @@
 // lib/auth.ts
-import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
 export interface User {
@@ -12,16 +11,24 @@ export interface User {
   profilePhotoUrl: string
 }
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+
 export async function getUser(): Promise<User | null> {
   try {
-    const cookieStore = await cookies()
-    const userDataCookie = cookieStore.get("user_data")
+    const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      method: "GET",
+      credentials: "include", // Important: includes session cookie
+      headers: {
+        Accept: "application/json",
+      },
+      cache: "no-store", // Don't cache auth checks
+    })
 
-    if (!userDataCookie?.value) {
+    if (!response.ok) {
       return null
     }
 
-    const userData = JSON.parse(userDataCookie.value)
+    const userData = await response.json()
     return userData
   } catch (error) {
     console.error("Error getting user:", error)
@@ -39,20 +46,7 @@ export async function requireAuth(): Promise<User> {
   return user
 }
 
-export async function getAccessToken(): Promise<string | null> {
-  try {
-    const cookieStore = await cookies()
-    const accessToken = cookieStore.get("access_token")
-    return accessToken?.value || null
-  } catch (error) {
-    console.error("Error getting access token:", error)
-    return null
-  }
-}
-
 export async function isAuthenticated(): Promise<boolean> {
   const user = await getUser()
-  const accessToken = await getAccessToken()
-
-  return !!(user && accessToken)
+  return !!user
 }

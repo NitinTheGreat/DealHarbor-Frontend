@@ -12,7 +12,7 @@ interface User {
   id: string
   name: string
   email: string
-  isVerifiedStudent: boolean
+  isStudentVerified: boolean
 }
 
 interface StudentVerificationFormProps {
@@ -88,9 +88,9 @@ export default function StudentVerificationForm({ user }: StudentVerificationFor
 
         if (result.success) {
           toast.success("Student verification successful! Welcome to the verified community! 🎉")
-          // Redirect to profile after successful verification
+          // Redirect to products after successful verification
           setTimeout(() => {
-            router.push("/profile")
+            router.push("/products")
           }, 1500)
         } else {
           toast.error(result.error || "Failed to verify OTP")

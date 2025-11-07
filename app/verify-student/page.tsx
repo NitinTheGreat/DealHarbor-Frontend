@@ -13,9 +13,9 @@ export default async function VerifyStudentPage() {
 
   const user = userResponse.data!
 
-  // If already verified, redirect to profile
-  if (user.isVerifiedStudent) {
-    redirect("/profile")
+  // If already verified, redirect to products
+  if ((user as any).isStudentVerified || (user as any).isVerifiedStudent) {
+    redirect("/products")
   }
 
   return (
