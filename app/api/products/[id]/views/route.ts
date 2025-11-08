@@ -1,20 +1,23 @@
 import { NextRequest, NextResponse } from "next/server"
 import { cookies } from "next/headers"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const cookieStore = await cookies()
-    const authToken = cookieStore.get("JSESSIONID")?.value
+    
+    // Get all cookies and forward them
+    const cookieHeader = request.headers.get("cookie")
 
-    const res = await fetch(`${API_BASE}/products/${params.id}/views`, {
+    const res = await fetch(`${API_BASE}/api/products/${id}/views`, {
       method: "POST",
       headers: {
-        ...(authToken && { Cookie: `JSESSIONID=${authToken}` }),
+        ...(cookieHeader && { Cookie: cookieHeader }),
       },
     })
 

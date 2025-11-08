@@ -115,6 +115,26 @@ export default function ProductActions({ productId, sellerId, product }: Props) 
     }
   }
 
+  const handleChatWithSeller = async () => {
+    try {
+      // Check if user is authenticated
+      const authRes = await fetch("/api/auth/me", { credentials: "include" })
+      if (!authRes.ok) {
+        router.push(`/login?redirect=/products/${productId}`)
+        return
+      }
+
+      const userData = await authRes.json()
+
+      // Redirect directly to messages page with seller ID
+      // The messages page will handle creating the conversation via WebSocket
+      router.push(`/messages?sellerId=${sellerId}&productId=${productId}`)
+    } catch (error) {
+      console.error('Error starting chat:', error)
+      toast.error("Failed to start chat")
+    }
+  }
+
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     setSendingMessage(true)
@@ -137,10 +157,13 @@ export default function ProductActions({ productId, sellerId, product }: Props) 
       }
 
       if (res.ok) {
-        toast.success("Message sent successfully!")
+        const data = await res.json()
+        toast.success("Redirecting to chat...")
         setShowMessageModal(false)
         setMessage("")
         setPhone("")
+        // Redirect to messages page
+        router.push(`/messages?conversationId=${data.conversationId || data.id}`)
       } else {
         throw new Error("Failed to send message")
       }
@@ -154,13 +177,14 @@ export default function ProductActions({ productId, sellerId, product }: Props) 
   return (
     <>
       <div className="space-y-3">
-        {/* Contact Seller Button */}
+        {/* Chat with Seller Button */}
         <button
-          onClick={() => setShowMessageModal(true)}
-          className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+          onClick={handleChatWithSeller}
+          className="w-full px-4 py-3 bg-gradient-to-r from-[#D97E96] to-[#E598AD] text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+          style={{ fontFamily: "var(--font-button)" }}
         >
           <MessageCircle className="w-5 h-5" />
-          Contact Seller
+          Chat with Seller
         </button>
 
         <div className="grid grid-cols-2 gap-2">
