@@ -5,9 +5,10 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const cookieStore = await cookies()
     const authToken = cookieStore.get("JSESSIONID")?.value
 
@@ -15,7 +16,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const res = await fetch(`${API_BASE}/favorites/${params.id}`, {
+    const res = await fetch(`${API_BASE}/favorites/${id}`, {
       method: "POST",
       headers: {
         Cookie: `JSESSIONID=${authToken}`,
@@ -43,9 +44,10 @@ export async function POST(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const cookieStore = await cookies()
     const authToken = cookieStore.get("JSESSIONID")?.value
 
@@ -53,7 +55,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const res = await fetch(`${API_BASE}/favorites/${params.id}`, {
+    const res = await fetch(`${API_BASE}/favorites/${id}`, {
       method: "DELETE",
       headers: {
         Cookie: `JSESSIONID=${authToken}`,

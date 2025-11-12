@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Plus } from "lucide-react"
 import type { Metadata } from "next"
@@ -31,7 +31,7 @@ async function getProducts(page: number = 0, sortBy: string = "date_desc"): Prom
   }
 }
 
-export default function ProductsPage() {
+function ProductsContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [productsData, setProductsData] = useState<PagedResponse<ProductResponse> | null>(null)
@@ -165,5 +165,19 @@ export default function ProductsPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <ProductGrid products={[]} isLoading={true} />
+        </div>
+      </div>
+    }>
+      <ProductsContent />
+    </Suspense>
   )
 }

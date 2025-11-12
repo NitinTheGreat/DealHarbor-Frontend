@@ -70,9 +70,9 @@ export default function HeroSection() {
       <div className="w-full h-full px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col items-center justify-center">
         <div className="text-center space-y-4 sm:space-y-6 w-full max-w-5xl mx-auto">
           {/* Tag */}
-          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/50 backdrop-blur-md rounded-full border border-[#D97E96]/20 hover:border-[#D97E96]/40 transition-all mx-auto text-xs sm:text-sm">
+          {/* <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/50 backdrop-blur-md rounded-full border border-[#D97E96]/20 hover:border-[#D97E96]/40 transition-all mx-auto text-xs sm:text-sm">
             <span className="font-body font-medium text-heading">Welcome to DealHarbor ✨</span>
-          </div>
+          </div> */}
 
           {/* Main Headline - Improved FIND text with better animation and responsive sizing */}
           <div className="space-y-2 sm:space-y-3 w-full">

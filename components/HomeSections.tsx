@@ -17,6 +17,21 @@ import {
 } from "lucide-react"
 import ProductCard from "@/components/ProductCard"
 
+// Helper function to resolve image URLs
+const getProductImage = (product: any): string => {
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+  const primaryImageUrl = product?.primaryImageUrl
+  const firstImageFromImages = product?.images?.[0]?.imageUrl
+  const firstLegacy = product?.imageUrls?.[0]
+  const nestedPrimaryImage = product?.primaryImage?.imageUrl
+  
+  const rawImage = primaryImageUrl || firstImageFromImages || firstLegacy || nestedPrimaryImage
+  
+  if (!rawImage) return "/placeholder.svg"
+  
+  return rawImage.startsWith("http") ? rawImage : `${API_BASE}${rawImage}`
+}
+
 // ============= STATS SECTION =============
 function CountUp({ end, duration = 2000, suffix = "" }: { end: number; duration?: number; suffix?: string }) {
   const [count, setCount] = useState(0)
@@ -297,8 +312,8 @@ function DealsSection({ products }: any) {
               >
                 <div className="relative overflow-hidden bg-gray-100 aspect-square">
                   <img
-                    src={product.primaryImage?.imageUrl || "/placeholder.svg"}
-                    alt={product.primaryImage?.altText}
+                    src={getProductImage(product)}
+                    alt={product.title}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                   />
                   <div className="absolute top-3 left-3 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse">
@@ -393,8 +408,8 @@ function RecentArrivalsSection({ products }: any) {
             >
               <div className="relative overflow-hidden bg-gray-100 aspect-square">
                 <img
-                  src={product.primaryImage?.imageUrl || "/placeholder.svg"}
-                  alt={product.primaryImage?.altText}
+                  src={getProductImage(product)}
+                  alt={product.title}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                 />
                 <div className="absolute top-3 left-3 bg-green-500 text-white px-2 py-1 rounded text-xs font-bold">
@@ -470,8 +485,8 @@ function TopRatedSection({ products }: any) {
             >
               <div className="relative overflow-hidden bg-gray-100 aspect-square">
                 <img
-                  src={product.primaryImage?.imageUrl || "/placeholder.svg"}
-                  alt={product.primaryImage?.altText}
+                  src={getProductImage(product)}
+                  alt={product.title}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                 />
                 <div className="absolute top-3 left-3 bg-yellow-400 text-black px-3 py-1 rounded-full text-xs font-bold">
@@ -538,8 +553,8 @@ function FeaturedSection({ products }: any) {
             >
               <div className="relative overflow-hidden bg-gray-100 aspect-square">
                 <img
-                  src={product.primaryImage?.imageUrl || "/placeholder.svg"}
-                  alt={product.primaryImage?.altText}
+                  src={getProductImage(product)}
+                  alt={product.title}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                 />
                 <div className="absolute top-3 left-3 bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold">
@@ -635,8 +650,8 @@ function CategoryPreviewSection({ categories }: any) {
                   >
                     <div className="w-full h-40 bg-gray-200 rounded-t-lg overflow-hidden">
                       <img
-                        src={product.primaryImage?.imageUrl || "/placeholder.svg"}
-                        alt={product.primaryImage?.altText}
+                        src={getProductImage(product)}
+                        alt={product.title}
                         className="w-full h-full object-cover"
                       />
                     </div>

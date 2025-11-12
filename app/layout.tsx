@@ -14,6 +14,17 @@ export const metadata: Metadata = {
   keywords: ["university", "marketplace", "students", "buy", "sell", "dealharbor"],
   authors: [{ name: "DealHarbor Team" }],
   robots: "index, follow",
+  manifest: "/manifest.json",
+  themeColor: "#D97E96",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "DealHarbor",
+  },
+  icons: {
+    icon: "/icons/icon.svg",
+    apple: "/icons/icon.svg",
+  },
   openGraph: {
     title: "DealHarbor - University Marketplace",
     description: "Buy and sell items within your university community safely and securely.",

@@ -1,7 +1,7 @@
 // app/messages/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useAuth } from '@/components/ClientAuth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { webSocketClient } from '@/lib/websocket';
@@ -12,7 +12,7 @@ import EmptyState from './components/EmptyState';
 import ConnectionStatus from './components/ConnectionStatus';
 import { Loader2, MessageSquarePlus } from 'lucide-react';
 
-export default function MessagesPage() {
+function MessagesContent() {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -248,5 +248,20 @@ export default function MessagesPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-[#FEF5F6] via-[#FFF8F3] to-[#F5F0FF]">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-button mx-auto mb-4" />
+          <p className="text-heading font-body">Loading messages...</p>
+        </div>
+      </div>
+    }>
+      <MessagesContent />
+    </Suspense>
   );
 }
