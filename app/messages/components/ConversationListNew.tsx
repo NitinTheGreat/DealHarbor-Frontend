@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { Loader2 } from 'lucide-react';
+import { webSocketClient } from '@/lib/websocket';
 
 interface Conversation {
   id: string;
@@ -19,6 +20,7 @@ interface Conversation {
   unreadCount: number;
   createdAt: string;
   updatedAt: string;
+  isOnline?: boolean; // Backend now provides this
 }
 
 interface ConversationListProps {
@@ -45,6 +47,60 @@ export default function ConversationListNew({
     const interval = setInterval(loadConversations, 30000);
     return () => clearInterval(interval);
   }, [refreshKey]); // Re-fetch when refreshKey changes
+
+  // Listen to WebSocket messages to update conversation list in real-time
+  useEffect(() => {
+    const handleNewMessage = (message: any) => {
+      console.log('[ConversationList] New message received, updating list:', message);
+      
+      // Update the conversation list immediately
+      setConversations((prev) => {
+        const updated = prev.map((conv) => {
+          if (conv.id === message.conversationId) {
+            return {
+              ...conv,
+              lastMessage: message.content,
+              lastMessageAt: message.createdAt || message.timestamp,
+              unreadCount: conv.id === activeConversationId ? 0 : conv.unreadCount + 1,
+            };
+          }
+          return conv;
+        });
+        
+        // Sort by lastMessageAt (most recent first)
+        return updated.sort((a, b) => {
+          const dateA = new Date(a.lastMessageAt || a.updatedAt || 0).getTime();
+          const dateB = new Date(b.lastMessageAt || b.updatedAt || 0).getTime();
+          return dateB - dateA;
+        });
+      });
+    };
+
+    // Handle presence updates to update online status in real-time
+    const handlePresence = (event: Event) => {
+      const data = (event as CustomEvent).detail as { userId: string; status: string };
+      console.log('[ConversationList] Presence update:', data);
+      
+      setConversations((prev) =>
+        prev.map((conv) => {
+          if (conv.otherUserId === data.userId) {
+            return {
+              ...conv,
+              isOnline: data.status === 'ONLINE',
+            };
+          }
+          return conv;
+        })
+      );
+    };
+
+    webSocketClient.onMessage(handleNewMessage);
+    window.addEventListener('websocket-presence', handlePresence);
+
+    return () => {
+      window.removeEventListener('websocket-presence', handlePresence);
+    };
+  }, [activeConversationId]);
 
   const loadConversations = async () => {
     try {
@@ -131,7 +187,8 @@ export default function ConversationListNew({
                   {conv.otherUserName.charAt(0).toUpperCase()}
                 </div>
               )}
-              {onlineUsers.has(conv.otherUserId) && (
+              {/* Show green dot if: backend says isOnline OR onlineUsers set has the user */}
+              {(conv.isOnline || onlineUsers.has(conv.otherUserId)) && (
                 <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
               )}
             </div>

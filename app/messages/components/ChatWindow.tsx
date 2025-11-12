@@ -23,12 +23,27 @@ interface Message {
 
 // Helper to normalize message from backend format
 function normalizeMessage(msg: any): Message {
-  return {
-    ...msg,
+  // Create a stable id even if backend omits id occasionally
+  const fallbackId = `${String(msg.conversationId ?? 'conv')}-${String(
+    msg.timestamp || msg.createdAt || Date.now()
+  )}-${String(msg.senderId ?? 'unknown')}`;
+
+  const normalized: Message = {
+    // Prefer server-provided id; otherwise generate a deterministic fallback
+    id: String(msg.id ?? msg.messageId ?? fallbackId),
+    conversationId: msg.conversationId ?? msg.conversation?.id,
+    senderId: String(msg.senderId ?? msg.fromUserId ?? ''),
+    content: String(msg.content ?? ''),
+    messageType: (msg.messageType || msg.type || 'TEXT') as 'TEXT' | 'IMAGE' | 'FILE',
     timestamp: msg.timestamp || msg.createdAt,
+    createdAt: msg.createdAt,
     isRead: msg.isRead ?? msg.read ?? false,
-    status: msg.status || (msg.read ? 'READ' : 'SENT'),
+    status: (msg.status || (msg.read ? 'READ' : 'SENT')) as 'SENT' | 'DELIVERED' | 'READ',
+    read: msg.read,
+    readAt: msg.readAt ?? null,
   };
+
+  return normalized;
 }
 
 interface Participant {
@@ -54,6 +69,7 @@ interface ConversationDetails {
   otherUserId?: string;
   otherUserName?: string;
   otherUserProfilePhotoUrl?: string;
+  isOnline?: boolean; // Backend now provides this
   lastMessage?: Message;
   unreadCount: number;
   createdAt: string;
@@ -86,10 +102,65 @@ export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Cache presence updates in case they arrive before conversation/participant are ready
+  const presenceCacheRef = useRef<Map<string, { status: 'ONLINE' | 'OFFLINE'; lastSeen?: string }>>(new Map());
+
+  // DEBUG: Expose function to test message updates
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).testAddMessage = () => {
+        const testMsg = {
+          id: 'test-' + Date.now(),
+          conversationId: conversationId,
+          senderId: 'test-user',
+          content: 'Test message from console',
+          messageType: 'TEXT' as const,
+          timestamp: new Date().toISOString(),
+          isRead: false,
+          status: 'SENT' as const,
+        };
+        console.log('[ChatWindow] 🧪 Test: Adding message directly to state:', testMsg);
+        setMessages((prev) => [...prev, testMsg]);
+      };
+      
+      (window as any).checkWebSocketStatus = () => {
+        console.log('[ChatWindow] 🔍 WebSocket Status Check:');
+        console.log('  - Connected:', webSocketClient.isConnected);
+        console.log('  - Current User ID:', user?.id);
+        console.log('  - Conversation ID:', conversationId);
+        console.log('  - Messages Count:', messages.length);
+        console.log('  - Other Participant:', otherParticipant);
+        return {
+          connected: webSocketClient.isConnected,
+          userId: user?.id,
+          conversationId,
+          messageCount: messages.length,
+          otherParticipant
+        };
+      };
+      
+      console.log('[ChatWindow] 🧪 Debug functions available:');
+      console.log('  - window.testAddMessage() - Add a test message');
+      console.log('  - window.checkWebSocketStatus() - Check connection status');
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete (window as any).testAddMessage;
+        delete (window as any).checkWebSocketStatus;
+      }
+    };
+  }, [conversationId, user?.id, messages.length]);
 
   // Get other participant - handle both backend formats
-  const otherParticipant = conversation
-    ? conversation.participants?.find((p) => p.userId !== user?.id) ||
+  const [otherParticipant, setOtherParticipant] = useState<Participant | undefined>(undefined);
+
+  useEffect(() => {
+    if (!conversation) {
+      setOtherParticipant(undefined);
+      return;
+    }
+
+    const participant = conversation.participants?.find((p) => p.userId !== user?.id) ||
       // Fallback: construct from flat fields if participants array doesn't exist
       (conversation.otherUserId
         ? {
@@ -97,10 +168,13 @@ export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) 
             firstName: conversation.otherUserName?.split(' ')[0] || 'User',
             lastName: conversation.otherUserName?.split(' ').slice(1).join(' ') || '',
             profileImageUrl: conversation.otherUserProfilePhotoUrl,
-            onlineStatus: 'OFFLINE' as const,
+            // Use backend's isOnline field if available, otherwise default to OFFLINE
+            onlineStatus: conversation.isOnline ? ('ONLINE' as const) : ('OFFLINE' as const),
           }
-        : undefined)
-    : undefined;
+        : undefined);
+
+    setOtherParticipant(participant);
+  }, [conversation, user?.id]);
 
   // Debug log - check if we're getting the right participant
   useEffect(() => {
@@ -248,10 +322,19 @@ export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) 
       console.log('[ChatWindow] Sending message:', content);
       console.log('[ChatWindow] Conversation ID:', conversationId);
 
-      // Send via WebSocket
-      webSocketClient.sendMessage(conversationId, content, 'TEXT');
+      // Try to send via WebSocket if connected
+      try {
+        if (webSocketClient.isConnected) {
+          webSocketClient.sendMessage(conversationId, content, 'TEXT');
+          console.log('[ChatWindow] Message sent via WebSocket');
+        } else {
+          console.warn('[ChatWindow] WebSocket not connected, using REST API only');
+        }
+      } catch (wsError) {
+        console.warn('[ChatWindow] WebSocket send failed, falling back to REST API:', wsError);
+      }
 
-      // Also send via REST API as backup
+      // Always send via REST API as primary/backup
       const response = await fetch(
         `/api/messages/conversations/${conversationId}/messages`,
         {
@@ -276,8 +359,11 @@ export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) 
       const newMessage = await response.json();
       console.log('[ChatWindow] Message sent successfully:', newMessage);
 
-      // Normalize the message format
-      const normalizedMessage = normalizeMessage(newMessage);
+      // Normalize the message format and set initial status as SENT
+      const normalizedMessage = {
+        ...normalizeMessage(newMessage),
+        status: newMessage.status || 'SENT', // Set to SENT initially
+      };
 
       // Add to messages if not already received via WebSocket
       setMessages((prev) => {
@@ -325,26 +411,54 @@ export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) 
 
   // WebSocket subscriptions
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id || !conversationId) {
+      console.log('[ChatWindow] ⏭️ Skipping WebSocket setup - missing user or conversationId:', { userId: user?.id, conversationId });
+      return;
+    }
 
-    console.log('[ChatWindow] Setting up WebSocket listeners');
+    console.log('[ChatWindow] 🔌 Setting up WebSocket listeners for conversation:', conversationId);
+    console.log('[ChatWindow] 📊 Current user:', user.id);
 
     // Handle incoming messages
     const handleNewMessage = (message: any) => {
-      console.log('[ChatWindow] New message received:', message);
-      if (message.conversationId === conversationId) {
+      console.log('[ChatWindow] 📨 New message received:', message);
+      console.log('[ChatWindow] 📍 Current conversation ID:', conversationId, 'Type:', typeof conversationId);
+      console.log('[ChatWindow] 📍 Message conversation ID:', message.conversationId, 'Type:', typeof message.conversationId);
+      
+      // Check if message belongs to this conversation (with type coercion for safety)
+      const messageConvId = String(message.conversationId);
+      const currentConvId = String(conversationId);
+      
+      if (messageConvId === currentConvId) {
+        console.log('[ChatWindow] ✅ Message belongs to this conversation, adding to messages');
         const normalizedMessage = normalizeMessage(message);
+        
         setMessages((prev) => {
           const exists = prev.some((m) => m.id === normalizedMessage.id);
-          if (exists) return prev;
-          return [...prev, normalizedMessage];
+          if (exists) {
+            console.log('[ChatWindow] ⚠️ Message already exists, skipping');
+            return prev;
+          }
+          console.log('[ChatWindow] 🆕 Adding new message to state, total will be:', prev.length + 1);
+          const newMessages = [...prev, normalizedMessage];
+          
+          // Scroll to bottom after state update
+          setTimeout(scrollToBottom, 50);
+          
+          return newMessages;
         });
-        setTimeout(scrollToBottom, 100);
 
         // Mark as read if not own message
         if (normalizedMessage.senderId !== user.id) {
-          setTimeout(() => markAsRead(), 1000);
+          console.log('[ChatWindow] 👁️ Marking message as read (not from current user)');
+          setTimeout(() => markAsRead(), 500);
         }
+        
+        // DON'T refresh conversation details here - it causes race conditions
+        // The conversation list will update via its own WebSocket listener
+      } else {
+        console.log('[ChatWindow] ❌ Message does NOT belong to this conversation, ignoring');
+        console.log(`[ChatWindow] ⚠️ Expected: "${currentConvId}", Got: "${messageConvId}"`);
       }
     };
 
@@ -365,39 +479,123 @@ export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) 
       }
     };
 
+    // Handle read receipts / delivery confirmations
+    const handleReceipt = (event: Event) => {
+      const data = (event as CustomEvent).detail as { messageId: string; status: 'DELIVERED' | 'READ'; timestamp: string };
+      console.log('[ChatWindow] Read receipt:', data);
+      
+      // Update message status
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === data.messageId
+            ? { ...msg, status: data.status, isRead: data.status === 'READ', readAt: data.timestamp }
+            : msg
+        )
+      );
+    };
+
     // Handle presence updates
     const handlePresence = (data: { userId: string; status: 'ONLINE' | 'OFFLINE'; lastSeen?: string }) => {
-      console.log('[ChatWindow] Presence update:', data);
-      if (otherParticipant && data.userId === otherParticipant.userId) {
-        setConversation((prev) => {
-          if (!prev) return null;
-          // Update participants array if it exists
-          if (prev.participants) {
-            return {
-              ...prev,
-              participants: prev.participants.map((p) =>
-                p.userId === data.userId
-                  ? { ...p, onlineStatus: data.status, lastSeen: data.lastSeen }
-                  : p
-              ),
-            };
-          }
-          return prev;
+      console.log('[ChatWindow] Presence update received:', data);
+      // Always cache the latest presence for any user
+      presenceCacheRef.current.set(data.userId, { status: data.status, lastSeen: data.lastSeen });
+      
+      // Check if this presence update is for the other user in this conversation
+      const isOtherUser = otherParticipant?.userId === data.userId || conversation?.otherUserId === data.userId;
+      
+      console.log('[ChatWindow] Checking presence:', {
+        'data.userId': data.userId,
+        'otherParticipant?.userId': otherParticipant?.userId,
+        'conversation?.otherUserId': conversation?.otherUserId,
+        'isOtherUser': isOtherUser
+      });
+      
+      if (isOtherUser) {
+        console.log('[ChatWindow] ✅ Presence update is for the other user in this conversation');
+        console.log(`[ChatWindow] 🔄 Updating status to: ${data.status}`);
+        
+        // Update the otherParticipant directly - THIS TRIGGERS HEADER RE-RENDER
+        setOtherParticipant((prev) => {
+          if (!prev) return prev;
+          const updated = {
+            ...prev,
+            onlineStatus: data.status,
+            lastSeen: data.lastSeen || prev.lastSeen,
+          };
+          console.log('[ChatWindow] 👤 Updated otherParticipant:', updated);
+          return updated;
         });
+
+        // Also update conversation state to keep everything in sync
+        setConversation((prev) => {
+          if (!prev) return prev;
+          
+          const updated = {
+            ...prev,
+            isOnline: data.status === 'ONLINE',
+          };
+          
+          // Also update participants array if it exists
+          if (prev.participants) {
+            updated.participants = prev.participants.map((p) =>
+              p.userId === data.userId
+                ? { ...p, onlineStatus: data.status, lastSeen: data.lastSeen || p.lastSeen }
+                : p
+            );
+          }
+          
+          console.log('[ChatWindow] 💬 Updated conversation:', updated);
+          return updated;
+        });
+      } else {
+        console.log('[ChatWindow] ⏭️ Presence update is for a different user, ignoring');
       }
     };
 
-    webSocketClient.onMessage(handleNewMessage);
-    webSocketClient.onPresence(handlePresence);
+    // Add callbacks to WebSocket client
+    const unsubscribeMessage = webSocketClient.onMessage(handleNewMessage);
+    const unsubscribePresence = webSocketClient.onPresence(handlePresence);
     window.addEventListener('websocket-typing', handleTyping);
+    window.addEventListener('websocket-receipt', handleReceipt);
+
+    console.log('[ChatWindow] ✅ WebSocket listeners registered successfully');
+    console.log('[ChatWindow] 🔗 Message callback registered');
+    console.log('[ChatWindow] 🔗 Presence callback registered');
 
     return () => {
+      console.log('[ChatWindow] 🧹 Cleaning up WebSocket listeners');
+      unsubscribeMessage();
+      unsubscribePresence();
       window.removeEventListener('websocket-typing', handleTyping);
+      window.removeEventListener('websocket-receipt', handleReceipt);
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
+      console.log('[ChatWindow] ✅ Cleanup complete');
     };
-  }, [conversationId, user?.id, otherParticipant, markAsRead, scrollToBottom]);
+  }, [conversationId, user?.id, otherParticipant, conversation?.otherUserId, markAsRead, scrollToBottom, loadConversationDetails]);
+
+  // Apply any cached presence update once we know who the other participant is
+  useEffect(() => {
+    const otherId = otherParticipant?.userId || conversation?.otherUserId;
+    if (!otherId) return;
+
+    const cached = presenceCacheRef.current.get(otherId);
+    if (!cached) return;
+
+    console.log('[ChatWindow] Applying cached presence for other user:', otherId, cached);
+    setOtherParticipant((prev) => (prev ? { ...prev, onlineStatus: cached.status, lastSeen: cached.lastSeen ?? prev.lastSeen } : prev));
+    setConversation((prev) => {
+      if (!prev) return prev;
+      const updated: ConversationDetails = { ...prev, isOnline: cached.status === 'ONLINE' };
+      if (prev.participants) {
+        updated.participants = prev.participants.map((p) =>
+          p.userId === otherId ? { ...p, onlineStatus: cached.status, lastSeen: cached.lastSeen ?? p.lastSeen } : p
+        );
+      }
+      return updated;
+    });
+  }, [otherParticipant?.userId, conversation?.otherUserId]);
 
   // Load more messages on scroll
   const handleScroll = () => {
@@ -568,6 +766,9 @@ export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) 
 
         {messages.map((message) => {
           const isOwnMessage = message.senderId === user?.id;
+          const isRead = message.isRead || message.status === 'READ';
+          const isDelivered = message.status === 'DELIVERED' || isRead;
+          
           return (
             <div
               key={message.id}
@@ -581,20 +782,43 @@ export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) 
                 }`}
               >
                 <p className="whitespace-pre-wrap break-words">{message.content}</p>
-                <p
-                  className={`text-xs mt-1 ${
+                <div
+                  className={`flex items-center gap-1 text-xs mt-1 ${
                     isOwnMessage ? 'text-white/80' : 'text-gray-500'
                   }`}
                 >
-                  {message.timestamp ? (
-                    <>
-                      {formatDistanceToNow(new Date(message.timestamp))} ago
-                      {isOwnMessage && message.status === 'READ' && ' • Read'}
-                    </>
-                  ) : (
-                    'Just now'
+                  <span>
+                    {message.timestamp ? (
+                      `${formatDistanceToNow(new Date(message.timestamp))} ago`
+                    ) : (
+                      'Just now'
+                    )}
+                  </span>
+                  
+                  {/* WhatsApp-style read receipts - only for own messages */}
+                  {isOwnMessage && (
+                    <span className="ml-1 flex-shrink-0">
+                      {isRead ? (
+                        // Double blue ticks for read - with spacing
+                        <svg className="w-5 h-4 inline" viewBox="0 0 20 16" fill="none">
+                          <path d="M1 8.5L4.5 12L13 3.5" stroke="#4FC3F7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M7 8.5L10.5 12L19 3.5" stroke="#4FC3F7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      ) : isDelivered ? (
+                        // Double white/gray ticks for delivered - with spacing
+                        <svg className="w-5 h-4 inline" viewBox="0 0 20 16" fill="none">
+                          <path d="M1 8.5L4.5 12L13 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M7 8.5L10.5 12L19 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      ) : (
+                        // Single white/gray tick for sent
+                        <svg className="w-4 h-4 inline" viewBox="0 0 12 12" fill="none">
+                          <path d="M2 6L5 9L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </span>
                   )}
-                </p>
+                </div>
               </div>
             </div>
           );

@@ -122,10 +122,17 @@ class WebSocketService {
     const messageSub = this.client.subscribe(`/user/${this.userId}/queue/messages`, (message) => {
       try {
         const data: Message = JSON.parse(message.body);
-        console.log('📨 New message received:', data);
+        console.log('📨 [WebSocket] New message received via /user/queue/messages:', {
+          id: data.id,
+          conversationId: data.conversationId,
+          senderId: data.senderId,
+          content: data.content?.substring(0, 50) + '...',
+          timestamp: data.timestamp
+        });
+        console.log('📨 [WebSocket] Notifying', this.messageCallbacks.size, 'message callbacks');
         this.notifyMessageCallbacks(data);
       } catch (error) {
-        console.error('Error parsing message:', error);
+        console.error('❌ Error parsing message:', error);
       }
     });
     this.subscriptions.set('messages', messageSub);
@@ -146,21 +153,48 @@ class WebSocketService {
     const presenceSub = this.client.subscribe(`/user/${this.userId}/queue/presence`, (message) => {
       try {
         const data = JSON.parse(message.body);
-        console.log('👤 Presence update:', data);
+        console.log('👤 [WebSocket] Personal presence update:', data);
         this.notifyPresenceCallbacks(data);
         window.dispatchEvent(new CustomEvent('websocket-presence', { detail: data }));
       } catch (error) {
-        console.error('Error parsing presence update:', error);
+        console.error('❌ Error parsing presence update:', error);
       }
     });
     this.subscriptions.set('presence', presenceSub);
 
-    console.log('✅ Subscribed to all WebSocket channels');
+    // Subscribe to GLOBAL presence updates (all users online/offline)
+    const globalPresenceSub = this.client.subscribe('/topic/presence', (message) => {
+      try {
+        const data = JSON.parse(message.body);
+        console.log('🌍 [WebSocket] Global presence update:', data);
+        console.log('🌍 [WebSocket] Notifying', this.presenceCallbacks.size, 'presence callbacks');
+        this.notifyPresenceCallbacks(data);
+        window.dispatchEvent(new CustomEvent('websocket-presence', { detail: data }));
+      } catch (error) {
+        console.error('❌ Error parsing global presence update:', error);
+      }
+    });
+    this.subscriptions.set('globalPresence', globalPresenceSub);
+
+    // Subscribe to read receipts / delivery confirmations
+    const receiptSub = this.client.subscribe(`/user/${this.userId}/queue/receipts`, (message) => {
+      try {
+        const data = JSON.parse(message.body);
+        console.log('✅ Read receipt received:', data);
+        this.notifyDeliveryCallbacks(data);
+        window.dispatchEvent(new CustomEvent('websocket-receipt', { detail: data }));
+      } catch (error) {
+        console.error('Error parsing read receipt:', error);
+      }
+    });
+    this.subscriptions.set('receipts', receiptSub);
+
+    console.log('✅ Subscribed to all WebSocket channels (including global presence)');
   }
 
   sendMessage(conversationId: string, content: string, type: 'TEXT' | 'IMAGE' | 'FILE' = 'TEXT'): void {
     if (!this.client?.active) {
-      console.error('❌ WebSocket not connected');
+      console.warn('⚠️ WebSocket not connected, message will be sent via REST API');
       throw new Error('WebSocket not connected');
     }
 
@@ -178,7 +212,7 @@ class WebSocketService {
       });
       console.log('📤 Message sent via WebSocket:', message);
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('❌ Error sending message via WebSocket:', error);
       throw error;
     }
   }
@@ -217,12 +251,12 @@ class WebSocketService {
     }
   }
 
-  updatePresence(status: 'ONLINE' | 'OFFLINE') {
+  updatePresence(status: 'ONLINE' | 'OFFLINE' | 'TYPING') {
     if (!this.client?.active || !this.userId) return;
 
     try {
       this.client.publish({
-        destination: '/app/user.presence',
+        destination: '/app/presence',
         body: JSON.stringify({
           userId: this.userId,
           status,

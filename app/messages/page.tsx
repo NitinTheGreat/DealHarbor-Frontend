@@ -22,6 +22,7 @@ export default function MessagesPage() {
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -97,7 +98,24 @@ export default function MessagesPage() {
     // Handle incoming messages - trigger conversation list refresh
     webSocketClient.onMessage((message: any) => {
       console.log('[MessagesPage] New message received:', message);
-      setRefreshKey((prev) => prev + 1);
+      // Don't refresh if we're viewing the conversation - let ChatWindow handle it
+      if (message.conversationId !== selectedConversationId) {
+        setRefreshKey((prev) => prev + 1);
+      }
+    });
+
+    // Handle presence updates
+    webSocketClient.onPresence((data: any) => {
+      console.log('[MessagesPage] Presence update:', data);
+      setOnlineUsers((prev) => {
+        const newSet = new Set(prev);
+        if (data.status === 'ONLINE') {
+          newSet.add(data.userId);
+        } else {
+          newSet.delete(data.userId);
+        }
+        return newSet;
+      });
     });
 
     // Cleanup on unmount
@@ -105,7 +123,7 @@ export default function MessagesPage() {
       console.log('[MessagesPage] Disconnecting WebSocket');
       webSocketClient.disconnect();
     };
-  }, [user?.id]);
+  }, [user?.id, selectedConversationId]);
 
   // Handle seller selection from search modal
   const handleSelectSeller = useCallback(async (
@@ -195,6 +213,7 @@ export default function MessagesPage() {
           <ConversationListNew
             activeConversationId={selectedConversationId}
             onSelectConversation={handleSelectConversation}
+            onlineUsers={onlineUsers}
             refreshKey={refreshKey}
           />
         </div>

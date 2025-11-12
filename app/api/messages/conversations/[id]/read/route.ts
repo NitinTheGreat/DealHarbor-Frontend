@@ -33,8 +33,10 @@ export async function PUT(
       );
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    // Backend returns plain text, not JSON
+    const text = await response.text();
+    console.log('[Mark as Read] Backend response:', text);
+    return NextResponse.json({ success: true, message: text });
   } catch (error) {
     console.error('[Mark as Read] Error:', error);
     return NextResponse.json(
