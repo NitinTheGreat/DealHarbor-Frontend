@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/ClientAuth"
-import ProductListingForm from "./components/ProductListingForm"
+import ProductListingFormStepped from "./components/ProductListingFormStepped"
 
 export default function CreateProductPage() {
   const router = useRouter()
@@ -51,7 +51,7 @@ export default function CreateProductPage() {
       {/* Form */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
-          <ProductListingForm />
+          <ProductListingFormStepped />
         </div>
       </div>
     </div>
