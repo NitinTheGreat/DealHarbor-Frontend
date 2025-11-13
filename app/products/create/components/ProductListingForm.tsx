@@ -14,6 +14,7 @@ export default function ProductListingForm() {
   const [categories, setCategories] = useState<CategoryResponse[]>([])
   const [tags, setTags] = useState<string[]>([])
   const [currentTag, setCurrentTag] = useState("")
+  const [files, setFiles] = useState<File[]>([])
 
   const [formData, setFormData] = useState<ProductCreateRequest>({
     title: "",
@@ -72,6 +73,39 @@ export default function ProductListingForm() {
     setTags((prev) => prev.filter((t) => t !== tag))
   }
 
+  // Upload images to backend and return URL paths
+  const uploadImages = async (uploadFiles: File[]): Promise<string[]> => {
+    const urls: string[] = []
+
+    for (const file of uploadFiles) {
+      if (!file.type.startsWith("image/")) {
+        throw new Error(`${file.name} is not an image`)
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error(`${file.name} exceeds 5MB`)
+      }
+
+      const form = new FormData()
+      form.append("file", file)
+
+      const res = await fetch("http://localhost:8080/api/images/upload-product", {
+        method: "POST",
+        credentials: "include",
+        body: form, // don't set Content-Type manually; browser will set boundaries
+      })
+
+      if (!res.ok) {
+        const msg = await res.text()
+        throw new Error(msg || `Failed to upload ${file.name}`)
+      }
+
+      const urlPath = await res.text() // e.g. "/api/images/products/..."
+      urls.push(urlPath)
+    }
+
+    return urls
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -81,6 +115,12 @@ export default function ProductListingForm() {
       if (!formData.categoryId || formData.categoryId === "") {
         toast.error("Please select a valid category")
         return
+      }
+
+      // 1) Upload images first (if any)
+      let imageUrls: string[] = []
+      if (files.length > 0) {
+        imageUrls = await uploadImages(files)
       }
 
       // Create product data matching backend API exactly
@@ -94,6 +134,7 @@ export default function ProductListingForm() {
         deliveryAvailable: formData.deliveryAvailable,
         tags: tags.length > 0 ? tags : undefined,
         pickupLocation: formData.pickupLocation || undefined,
+        imageUrls,
         // Include optional fields only if they have values
         ...(formData.originalPrice && formData.originalPrice > 0 && { originalPrice: formData.originalPrice }),
         ...(formData.brand && { brand: formData.brand }),
@@ -215,17 +256,104 @@ export default function ProductListingForm() {
         </div>
       </section>
 
-      {/* Images - Coming Soon */}
+      {/* Images */}
       <section>
         <h2 className="text-2xl font-bold text-heading mb-4">Product Images</h2>
-        
-        <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4">
-          <p className="text-amber-800 font-medium">
-            📸 Image upload coming soon!
-          </p>
-          <p className="text-amber-700 text-sm mt-1">
-            Product images will be available in a future update. You can still create your product listing now.
-          </p>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-600">
+              You can upload multiple images. First image becomes primary. Image files only (max 5MB each).
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <label
+              className="inline-flex items-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-button"
+            >
+              <Upload className="w-5 h-5 text-gray-600" />
+              <span className="text-sm font-medium">Choose Images</span>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                hidden
+                onChange={(e) => {
+                  const list = e.target.files
+                  if (!list) return
+                  const incoming = Array.from(list)
+
+                  const valid: File[] = []
+                  for (const f of incoming) {
+                    if (!f.type.startsWith("image/")) {
+                      toast.error(`${f.name} is not an image`)
+                      continue
+                    }
+                    if (f.size > 5 * 1024 * 1024) {
+                      toast.error(`${f.name} exceeds 5MB`)
+                      continue
+                    }
+                    valid.push(f)
+                  }
+
+                  if (valid.length > 0) {
+                    // Append to existing, preserve order
+                    setFiles((prev) => [...prev, ...valid])
+                  }
+                  // reset input value so same file can be selected again later
+                  e.currentTarget.value = ""
+                }}
+              />
+            </label>
+            {files.length > 0 && (
+              <span className="text-sm text-gray-600">{files.length} selected</span>
+            )}
+          </div>
+
+          {files.length > 0 && (
+            <div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {files.map((file, idx) => {
+                  const url = URL.createObjectURL(file)
+                  const isPrimary = idx === 0
+                  return (
+                    <div key={idx} className="relative rounded-lg overflow-hidden border">
+                      <img src={url} alt={file.name} className="w-full h-40 object-cover" />
+                      {isPrimary ? (
+                        <span className="absolute top-2 left-2 bg-button text-white text-xs px-2 py-1 rounded">Primary</span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="absolute top-2 left-2 bg-white/90 text-xs px-2 py-1 rounded border"
+                          onClick={() => {
+                            // move this image to the front to make it primary
+                            setFiles((prev) => {
+                              const copy = [...prev]
+                              const [moved] = copy.splice(idx, 1)
+                              copy.unshift(moved)
+                              return copy
+                            })
+                          }}
+                        >
+                          Make Primary
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="absolute top-2 right-2 bg-white/90 p-1 rounded-full shadow"
+                        onClick={() => {
+                          setFiles((prev) => prev.filter((_, i) => i !== idx))
+                        }}
+                        aria-label="Remove image"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+              <p className="text-xs text-gray-500 mt-2">Tip: Reorder by setting another image as primary. The order is used for display.</p>
+            </div>
+          )}
         </div>
       </section>
 

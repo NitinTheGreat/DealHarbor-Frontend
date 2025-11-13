@@ -1,18 +1,21 @@
-// app/api/products/[productId]/route.ts
+// app/api/products/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server"
 
-export async function GET(req: NextRequest, { params }: { params: { productId: string } }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
   try {
-    const { productId } = params
+    const { id } = await params
 
     // Get cookies from the incoming request
     const cookieHeader = req.headers.get("cookie")
 
-    console.log(`/api/products/${productId} - Fetching product details`)
+    console.log(`/api/products/${id} - Fetching product details`)
 
-    const backendRes = await fetch(`${API_BASE_URL}/api/products/${productId}`, {
+    const backendRes = await fetch(`${API_BASE_URL}/api/products/${id}`, {
       method: "GET",
       headers: {
         Accept: "application/json",
@@ -20,11 +23,11 @@ export async function GET(req: NextRequest, { params }: { params: { productId: s
       },
     })
 
-    console.log(`/api/products/${productId} - Backend response status:`, backendRes.status)
+    console.log(`/api/products/${id} - Backend response status:`, backendRes.status)
 
     if (!backendRes.ok) {
       const errorText = await backendRes.text()
-      console.error(`/api/products/${productId} - Backend error:`, errorText)
+      console.error(`/api/products/${id} - Backend error:`, errorText)
       return new NextResponse(errorText, {
         status: backendRes.status,
         headers: {
@@ -36,7 +39,7 @@ export async function GET(req: NextRequest, { params }: { params: { productId: s
     const data = await backendRes.json()
     return NextResponse.json(data)
   } catch (err) {
-    console.error(`/api/products/${params.productId} error:`, err)
+    console.error(`/api/products error:`, err)
     return NextResponse.json({ error: "Failed to fetch product" }, { status: 500 })
   }
 }

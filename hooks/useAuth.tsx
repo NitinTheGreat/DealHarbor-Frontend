@@ -35,8 +35,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await fetch("/api/auth/me", {
         method: "GET",
         credentials: "include", // Important: includes session cookie
+        cache: "no-store",
         headers: {
           Accept: "application/json",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0",
         },
       })
 

@@ -5,6 +5,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/components/ClientAuth"
 import { Toaster } from "sonner"
+import AppHeader from "@/components/AppHeader"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -12,8 +13,19 @@ export const metadata: Metadata = {
   title: "DealHarbor - University Marketplace",
   description: "Buy and sell items within your university community safely and securely.",
   keywords: ["university", "marketplace", "students", "buy", "sell", "dealharbor"],
-  authors: [{ name: "DealHarbor Team" }],
+  authors: [{ name: "Nitin Pandey" }],
   robots: "index, follow",
+  manifest: "/manifest.json",
+  themeColor: "#D97E96",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "DealHarbor",
+  },
+  icons: {
+    icon: "/icons/icon.svg",
+    apple: "/icons/icon.svg",
+  },
   openGraph: {
     title: "DealHarbor - University Marketplace",
     description: "Buy and sell items within your university community safely and securely.",
@@ -42,6 +54,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <AuthProvider>
+          <AppHeader />
           {children}
           <Toaster
             position="top-right"

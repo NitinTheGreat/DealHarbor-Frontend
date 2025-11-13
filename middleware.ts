@@ -23,6 +23,9 @@ export async function middleware(req: NextRequest) {
       method: "GET",
       headers: {
         accept: "application/json",
+        "cache-control": "no-cache, no-store, must-revalidate",
+        "pragma": "no-cache",
+        "expires": "0",
         // Forward browser cookies (JSESSIONID should be present on localhost domain)
         ...(cookieHeader ? { cookie: cookieHeader } : {}),
       },

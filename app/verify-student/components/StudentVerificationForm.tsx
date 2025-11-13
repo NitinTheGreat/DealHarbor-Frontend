@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { Mail, Sparkles } from "lucide-react"
 import { sendStudentOtp, verifyStudentOtp } from "../actions"
 import { OTPInput } from "@/components/ui/otp-input"
+import { useAuth } from "@/components/ClientAuth"
 
 interface User {
   id: string
@@ -21,6 +22,7 @@ interface StudentVerificationFormProps {
 
 export default function StudentVerificationForm({ user }: StudentVerificationFormProps) {
   const router = useRouter()
+  const { checkAuthStatus } = useAuth()
   const [isPending, startTransition] = useTransition()
   const [step, setStep] = useState<"email" | "otp">("email")
   const [studentEmail, setStudentEmail] = useState("")
@@ -88,9 +90,12 @@ export default function StudentVerificationForm({ user }: StudentVerificationFor
 
         if (result.success) {
           toast.success("Student verification successful! Welcome to the verified community! 🎉")
+          // Refresh auth context to update verification status
+          await checkAuthStatus()
           // Redirect to products after successful verification
           setTimeout(() => {
             router.push("/products")
+            router.refresh()
           }, 1500)
         } else {
           toast.error(result.error || "Failed to verify OTP")
