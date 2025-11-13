@@ -48,7 +48,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   }
 
   return (
-    <Link href={`/products/${product.id}`}>
+    <Link href={`/products/${product.id}`} className="cursor-pointer">
       <div className="group relative bg-white rounded-xl border-2 border-gray-200 hover:border-button transition-all duration-200 overflow-hidden hover:shadow-lg">
         {/* Image Container */}
         <div className="relative aspect-square overflow-hidden bg-gray-100">
@@ -87,7 +87,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               // TODO: Implement favorite functionality
               console.log("Add to favorites:", product.id)
             }}
-            className="absolute top-2 right-2 p-2 bg-white/90 hover:bg-white rounded-full shadow-md transition-colors"
+            className="absolute top-2 right-2 p-2 bg-white/90 hover:bg-white rounded-full shadow-md transition-colors cursor-pointer"
           >
             <Heart className="h-5 w-5 text-gray-600 hover:text-red-500 transition-colors" />
           </button>

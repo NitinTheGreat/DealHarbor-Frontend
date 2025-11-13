@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "./ClientAuth"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronDown, User, LogOut } from "lucide-react"
+import { ChevronDown, User, LogOut, MessageCircle, PlusCircle } from "lucide-react"
 
 export default function ProfileDropdown() {
   const { user, logout } = useAuth()
@@ -33,6 +33,16 @@ export default function ProfileDropdown() {
   const handleProfile = () => {
     setIsOpen(false)
     router.push("/profile")
+  }
+
+  const handleMessages = () => {
+    setIsOpen(false)
+    router.push("/messages")
+  }
+
+  const handleSellProduct = () => {
+    setIsOpen(false)
+    router.push("/products/create")
   }
 
   if (!user) return null
@@ -110,7 +120,7 @@ export default function ProfileDropdown() {
                 whileHover={{ backgroundColor: "#F3F4F6", x: 4 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleProfile}
-                className="w-full px-4 py-2.5 flex items-center gap-3 text-left transition-colors"
+                className="w-full px-4 py-2.5 flex items-center gap-3 text-left transition-colors cursor-pointer"
               >
                 <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
                   <User className="w-5 h-5 text-blue-600" />
@@ -122,10 +132,40 @@ export default function ProfileDropdown() {
               </motion.button>
 
               <motion.button
+                whileHover={{ backgroundColor: "#F3F4F6", x: 4 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleMessages}
+                className="w-full px-4 py-2.5 flex items-center gap-3 text-left transition-colors cursor-pointer"
+              >
+                <div className="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center">
+                  <MessageCircle className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-heading text-sm">Messages</p>
+                  <p className="text-xs text-subheading">View your conversations</p>
+                </div>
+              </motion.button>
+
+              <motion.button
+                whileHover={{ backgroundColor: "#F3F4F6", x: 4 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleSellProduct}
+                className="w-full px-4 py-2.5 flex items-center gap-3 text-left transition-colors cursor-pointer"
+              >
+                <div className="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center">
+                  <PlusCircle className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-heading text-sm">Sell Product</p>
+                  <p className="text-xs text-subheading">List a new product</p>
+                </div>
+              </motion.button>
+
+              <motion.button
                 whileHover={{ backgroundColor: "#FEE2E2", x: 4 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleLogout}
-                className="w-full px-4 py-2.5 flex items-center gap-3 text-left transition-colors group mt-1"
+                className="w-full px-4 py-2.5 flex items-center gap-3 text-left transition-colors group mt-1 cursor-pointer"
               >
                 <div className="w-9 h-9 rounded-lg bg-red-50 group-hover:bg-red-600 flex items-center justify-center transition-colors">
                   <LogOut className="w-5 h-5 text-red-600 group-hover:text-white transition-colors" />

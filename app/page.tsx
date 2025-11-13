@@ -1,9 +1,11 @@
-import type { Metadata } from "next"
+"use client"
+
 import HeroSection from "@/components/Hero"
 import AllSections from "@/components/HomeSections"
 import Footer from "@/components/Footer"
+import { useEffect } from "react"
 
-export const metadata: Metadata = {
+const metadata = {
   title: "DealHarbor - Student Marketplace for Great Deals",
   description:
     "Discover trending deals, verified sellers, and authentic products on DealHarbor. The ultimate student marketplace for buying and selling with confidence.",
@@ -55,6 +57,11 @@ export const metadata: Metadata = {
 }
 
 export default function Home() {
+  useEffect(() => {
+    // Set document title
+    document.title = "DealHarbor - Student Marketplace for Great Deals"
+  }, [])
+
   return (
     <main className="overflow-hidden">
       <HeroSection />

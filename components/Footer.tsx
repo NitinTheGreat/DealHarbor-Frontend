@@ -15,13 +15,13 @@ export default function Footer() {
               The ultimate marketplace for verified sellers and authentic deals.
             </p>
             <div className="flex gap-4 mt-6">
-              <a href="#" className="text-gray-300 hover:text-white transition" aria-label="Facebook">
+              <a href="#" className="text-gray-300 hover:text-white transition cursor-pointer" aria-label="Facebook">
                 <Facebook className="w-5 h-5" />
               </a>
-              <a href="#" className="text-gray-300 hover:text-white transition" aria-label="Twitter">
+              <a href="#" className="text-gray-300 hover:text-white transition cursor-pointer" aria-label="Twitter">
                 <Twitter className="w-5 h-5" />
               </a>
-              <a href="#" className="text-gray-300 hover:text-white transition" aria-label="Instagram">
+              <a href="#" className="text-gray-300 hover:text-white transition cursor-pointer" aria-label="Instagram">
                 <Instagram className="w-5 h-5" />
               </a>
             </div>
@@ -32,22 +32,22 @@ export default function Footer() {
             <h4 className="font-heading font-bold mb-4">Quick Links</h4>
             <ul className="space-y-3 font-body text-sm">
               <li>
-                <Link href="/" className="text-gray-300 hover:text-white transition">
+                <Link href="/" className="text-gray-300 hover:text-white transition cursor-pointer">
                   Home
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="text-gray-300 hover:text-white transition">
+                <Link href="/about" className="text-gray-300 hover:text-white transition cursor-pointer">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link href="/categories" className="text-gray-300 hover:text-white transition">
+                <Link href="/categories" className="text-gray-300 hover:text-white transition cursor-pointer">
                   Categories
                 </Link>
               </li>
               <li>
-                <Link href="/sellers" className="text-gray-300 hover:text-white transition">
+                <Link href="/sellers" className="text-gray-300 hover:text-white transition cursor-pointer">
                   Sell With Us
                 </Link>
               </li>
@@ -59,22 +59,22 @@ export default function Footer() {
             <h4 className="font-heading font-bold mb-4">Support</h4>
             <ul className="space-y-3 font-body text-sm">
               <li>
-                <Link href="/help" className="text-gray-300 hover:text-white transition">
+                <Link href="/help" className="text-gray-300 hover:text-white transition cursor-pointer">
                   Help Center
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-gray-300 hover:text-white transition">
+                <Link href="/contact" className="text-gray-300 hover:text-white transition cursor-pointer">
                   Contact Us
                 </Link>
               </li>
               <li>
-                <Link href="/faq" className="text-gray-300 hover:text-white transition">
+                <Link href="/faq" className="text-gray-300 hover:text-white transition cursor-pointer">
                   FAQ
                 </Link>
               </li>
               <li>
-                <Link href="/shipping" className="text-gray-300 hover:text-white transition">
+                <Link href="/shipping" className="text-gray-300 hover:text-white transition cursor-pointer">
                   Shipping Info
                 </Link>
               </li>
@@ -86,17 +86,17 @@ export default function Footer() {
             <h4 className="font-heading font-bold mb-4">Legal</h4>
             <ul className="space-y-3 font-body text-sm">
               <li>
-                <Link href="/privacy" className="text-gray-300 hover:text-white transition">
+                <Link href="/privacy" className="text-gray-300 hover:text-white transition cursor-pointer">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="text-gray-300 hover:text-white transition">
+                <Link href="/terms" className="text-gray-300 hover:text-white transition cursor-pointer">
                   Terms of Service
                 </Link>
               </li>
               <li>
-                <Link href="/cookies" className="text-gray-300 hover:text-white transition">
+                <Link href="/cookies" className="text-gray-300 hover:text-white transition cursor-pointer">
                   Cookie Policy
                 </Link>
               </li>

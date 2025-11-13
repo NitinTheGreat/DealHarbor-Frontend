@@ -175,7 +175,7 @@ function TrendingSection({ products }: any) {
             <Flame className="w-8 h-8 text-orange-500" />
             <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading">🔥 Trending Now</h2>
           </div>
-          <a href="/trending" className="text-button hover:text-button-hover font-body font-semibold transition">
+          <a href="/trending" className="text-button hover:text-button-hover font-body font-semibold transition cursor-pointer">
             View All →
           </a>
         </div>
@@ -297,7 +297,7 @@ function DealsSection({ products }: any) {
             <Zap className="w-8 h-8 text-orange-500" />
             <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading">⚡ Deals of the Day</h2>
           </div>
-          <a href="/deals" className="text-button hover:text-button-hover font-body font-semibold transition">
+          <a href="/deals" className="text-button hover:text-button-hover font-body font-semibold transition cursor-pointer">
             View All →
           </a>
         </div>
@@ -395,7 +395,7 @@ function RecentArrivalsSection({ products }: any) {
             <Clock className="w-8 h-8 text-blue-500" />
             <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading">⏱️ Recently Added</h2>
           </div>
-          <a href="/recent" className="text-button hover:text-button-hover font-body font-semibold transition">
+          <a href="/recent" className="text-button hover:text-button-hover font-body font-semibold transition cursor-pointer">
             View All →
           </a>
         </div>
@@ -472,7 +472,7 @@ function TopRatedSection({ products }: any) {
             <Star className="w-8 h-8 text-yellow-500" />
             <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading">⭐ Top Rated by Sellers</h2>
           </div>
-          <a href="/top-rated" className="text-button hover:text-button-hover font-body font-semibold transition">
+          <a href="/top-rated" className="text-button hover:text-button-hover font-body font-semibold transition cursor-pointer">
             View All →
           </a>
         </div>
@@ -540,7 +540,7 @@ function FeaturedSection({ products }: any) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-12">
           <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading">✨ Featured Picks</h2>
-          <a href="#" className="text-button hover:text-button-hover font-body text-sm font-semibold">
+          <a href="#" className="text-button hover:text-button-hover font-body text-sm font-semibold cursor-pointer">
             View All →
           </a>
         </div>
@@ -680,46 +680,81 @@ function CategoryPreviewSection({ categories }: any) {
   )
 }
 
+// ============= CACHE UTILITIES =============
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+const CACHE_PREFIX = "homepage_"
+
+const getCachedData = (key: string) => {
+  if (typeof window === "undefined") return null
+  try {
+    const cached = localStorage.getItem(CACHE_PREFIX + key)
+    if (!cached) return null
+    const { data, timestamp } = JSON.parse(cached)
+    if (Date.now() - timestamp > CACHE_DURATION) {
+      localStorage.removeItem(CACHE_PREFIX + key)
+      return null
+    }
+    return data
+  } catch {
+    return null
+  }
+}
+
+const setCachedData = (key: string, data: any) => {
+  if (typeof window === "undefined") return
+  try {
+    localStorage.setItem(CACHE_PREFIX + key, JSON.stringify({ data, timestamp: Date.now() }))
+  } catch (e) {
+    console.warn("Cache storage failed:", e)
+  }
+}
+
 // ============= MAIN COMPONENT =============
 export default function AllSections() {
-  const [stats, setStats] = useState<any>(null)
-  const [trending, setTrending] = useState<any>(null)
-  const [categories, setCategories] = useState<any>(null)
-  const [deals, setDeals] = useState<any>(null)
-  const [recent, setRecent] = useState<any>(null)
-  const [topRated, setTopRated] = useState<any>(null)
-  const [featured, setFeatured] = useState<any>(null)
-  const [categoryPreviews, setCategoryPreviews] = useState<any>(null)
+  const [stats, setStats] = useState<any>(() => getCachedData("stats"))
+  const [trending, setTrending] = useState<any>(() => getCachedData("trending"))
+  const [categories, setCategories] = useState<any>(() => getCachedData("categories"))
+  const [deals, setDeals] = useState<any>(() => getCachedData("deals"))
+  const [recent, setRecent] = useState<any>(() => getCachedData("recent"))
+  const [topRated, setTopRated] = useState<any>(() => getCachedData("topRated"))
+  const [featured, setFeatured] = useState<any>(() => getCachedData("featured"))
+  const [categoryPreviews, setCategoryPreviews] = useState<any>(() => getCachedData("categoryPreviews"))
 
   useEffect(() => {
-    const fetchAll = async () => {
+    // Fetch each section independently and render as soon as it loads
+    const fetchSection = async (
+      url: string,
+      key: string,
+      setter: (data: any) => void,
+      transform?: (data: any) => any,
+    ) => {
       try {
-        const [statsRes, trendingRes, categoriesRes, dealsRes, recentRes, topRatedRes, featuredRes, previewRes] =
-          await Promise.all([
-            fetch("/api/products/homepage-stats"),
-            fetch("/api/products/trending?page=0&size=12"),
-            fetch("/api/categories"),
-            fetch("/api/products/deals?page=0&size=12"),
-            fetch("/api/products/recent?page=0&size=12"),
-            fetch("/api/products/top-rated?page=0&size=12"),
-            fetch("/api/products/featured?page=0&size=8"),
-            fetch("/api/products/by-category-preview?productsPerCategory=6"),
-          ])
-
-        if (statsRes.ok) setStats(await statsRes.json())
-        if (trendingRes.ok) setTrending((await trendingRes.json()).content)
-        if (categoriesRes.ok) setCategories((await categoriesRes.json()).filter((c: any) => c.isActive).slice(0, 8))
-        if (dealsRes.ok) setDeals((await dealsRes.json()).content)
-        if (recentRes.ok) setRecent((await recentRes.json()).content)
-        if (topRatedRes.ok) setTopRated((await topRatedRes.json()).content)
-        if (featuredRes.ok) setFeatured((await featuredRes.json()).content)
-        if (previewRes.ok) setCategoryPreviews(await previewRes.json())
+        const response = await fetch(url, {
+          next: { revalidate: 300 }, // 5 min revalidation
+          headers: { "Cache-Control": "public, max-age=300, stale-while-revalidate=600" },
+        })
+        if (response.ok) {
+          const data = await response.json()
+          const transformed = transform ? transform(data) : data
+          setter(transformed)
+          setCachedData(key, transformed)
+        }
       } catch (error) {
-        console.error("[v0] Failed to fetch sections:", error)
+        console.error(`Failed to fetch ${key}:`, error)
       }
     }
 
-    fetchAll()
+    // Fire all requests immediately without waiting
+    fetchSection("/api/products/homepage-stats", "stats", setStats)
+    fetchSection("/api/products/trending?page=0&size=12", "trending", setTrending, (data) => data.content)
+    fetchSection("/api/categories", "categories", setCategories, (data) =>
+      data.filter((c: any) => c.isActive).slice(0, 8),
+    )
+    fetchSection("/api/products/deals?page=0&size=12", "deals", setDeals, (data) => data.content)
+    fetchSection("/api/products/recent?page=0&size=12", "recent", setRecent, (data) => data.content)
+    fetchSection("/api/products/top-rated?page=0&size=12", "topRated", setTopRated, (data) => data.content)
+    fetchSection("/api/products/featured?page=0&size=8", "featured", setFeatured, (data) => data.content)
+    fetchSection("/api/products/by-category-preview?productsPerCategory=6", "categoryPreviews", setCategoryPreviews)
   }, [])
 
   return (

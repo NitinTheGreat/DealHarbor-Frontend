@@ -4,10 +4,14 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { Search } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useAuth } from "./ClientAuth"
+import ProfileDropdown from "./ProfileDropdown"
+import Link from "next/link"
 
 export default function HeroSection() {
   const [keyword, setKeyword] = useState("")
   const router = useRouter()
+  const { user } = useAuth()
   const [scrollY, setScrollY] = useState(0)
   const [floatingItems, setFloatingItems] = useState<Array<{ id: number; x: number; y: number }>>([])
 
@@ -38,7 +42,33 @@ export default function HeroSection() {
   }
 
   return (
-    <section className="relative w-full h-screen bg-gradient-to-br from-[#FEF5F6] via-[#FFF8F3] to-[#F5F0FF] overflow-hidden flex items-center justify-center">
+    <section className="relative w-full h-screen bg-gradient-to-br from-[#FEF5F6] via-[#FFF8F3] to-[#F5F0FF] overflow-hidden flex flex-col">
+      {/* Header Navigation */}
+      <div className="absolute top-0 left-0 right-0 z-20">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2 cursor-pointer">
+              <span className="font-heading text-xl sm:text-2xl font-bold bg-gradient-to-r from-[#D97E96] to-purple-500 bg-clip-text text-transparent">DealHarbor</span>
+            </Link>
+            
+            <div className="flex items-center gap-4">
+              {user ? (
+                <ProfileDropdown />
+              ) : (
+                <Link
+                  href="/login"
+                  className="px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-[#D97E96] to-purple-500 text-white font-semibold rounded-lg hover:shadow-lg transition-all duration-200"
+                >
+                  Login
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Hero Content */}
+      <div className="flex-1 flex items-center justify-center">
       <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-[#D97E96]/20 to-[#D97E96]/5 rounded-full blur-3xl animate-pulse" />
       <div className="absolute top-32 right-0 w-80 h-80 bg-gradient-to-bl from-purple-400/15 to-pink-300/10 rounded-full blur-3xl animate-pulse delay-700" />
       <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-gradient-to-tr from-pink-300/15 to-purple-400/8 rounded-full blur-3xl animate-pulse delay-1000" />
@@ -67,7 +97,7 @@ export default function HeroSection() {
       </div>
 
       {/* Main Content - Fully responsive layout */}
-      <div className="w-full h-full px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col items-center justify-center">
+      <div className="w-full px-4 sm:px-6 lg:px-8 relative z-10 flex flex-col items-center justify-center">
         <div className="text-center space-y-4 sm:space-y-6 w-full max-w-5xl mx-auto">
           {/* Tag */}
           {/* <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/50 backdrop-blur-md rounded-full border border-[#D97E96]/20 hover:border-[#D97E96]/40 transition-all mx-auto text-xs sm:text-sm">
@@ -148,6 +178,7 @@ export default function HeroSection() {
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       <style jsx>{`

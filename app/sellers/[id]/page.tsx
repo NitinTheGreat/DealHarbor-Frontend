@@ -120,14 +120,7 @@ export default function SellerPage({ params }: { params: Promise<{ id: string }>
   }, [id, router])
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading seller profile...</p>
-        </div>
-      </div>
-    )
+    return null // Loading state now handled by loading.tsx
   }
 
   if (error || !seller) {

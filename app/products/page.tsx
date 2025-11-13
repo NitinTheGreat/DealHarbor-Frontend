@@ -170,13 +170,7 @@ function ProductsContent() {
 
 export default function ProductsPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <ProductGrid products={[]} isLoading={true} />
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<ProductGrid products={[]} isLoading={true} />}>
       <ProductsContent />
     </Suspense>
   )
