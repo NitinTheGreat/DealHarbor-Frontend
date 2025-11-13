@@ -6,9 +6,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+  
+  let sellerId: string | undefined
 
   try {
     const { id } = await params
+    sellerId = id
     const { searchParams } = new URL(req.url)
     const page = searchParams.get("page") || "0"
     const size = searchParams.get("size") || "20"
@@ -16,7 +19,7 @@ export async function GET(
     // Get cookies from the incoming request
     const cookieHeader = req.headers.get("cookie")
 
-    console.log(`/api/sellers/${id}/products - Fetching seller products`)
+    console.log(`/api/sellers/${id}/products - Fetching seller products from ${API_BASE_URL}`)
 
     const backendRes = await fetch(
       `${API_BASE_URL}/api/products/seller/${id}?page=${page}&size=${size}`,
@@ -45,7 +48,16 @@ export async function GET(
     const data = await backendRes.json()
     return NextResponse.json(data)
   } catch (err) {
-    console.error(`/api/sellers/${params}/products error:`, err)
-    return NextResponse.json({ error: "Failed to fetch seller products" }, { status: 500 })
+    const errorMessage = err instanceof Error ? err.message : "Unknown error"
+    const isConnectionRefused = errorMessage.includes("ECONNREFUSED") || errorMessage.includes("fetch failed")
+    
+    console.error(`/api/sellers/${sellerId || "unknown"}/products error:`, err)
+    
+    return NextResponse.json({ 
+      error: isConnectionRefused 
+        ? "Backend server is not running. Please start the Spring Boot server on port 8080." 
+        : "Failed to fetch seller products",
+      details: errorMessage
+    }, { status: 503 })
   }
 }

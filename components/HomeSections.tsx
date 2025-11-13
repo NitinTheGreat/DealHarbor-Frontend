@@ -219,21 +219,21 @@ function CategoriesSection({ categories }: any) {
   if (!categories) {
     return (
       <section className="py-16 md:py-24 bg-white border-t border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading mb-12">📂 Shop by Category</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="bg-gray-200 rounded-lg h-32 animate-pulse" />
             ))}
           </div>
-        </div>
+        </div> */}
       </section>
     )
   }
 
   return (
     <section className="py-16 md:py-24 bg-white border-t border-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading mb-4">📂 Shop by Category</h2>
         <p className="font-body text-subheading mb-12">
           Browse thousands of products across our most popular categories
@@ -263,7 +263,7 @@ function CategoriesSection({ categories }: any) {
             </button>
           ))}
         </div>
-      </div>
+      </div> */}
     </section>
   )
 }
@@ -538,12 +538,12 @@ function FeaturedSection({ products }: any) {
   return (
     <section className="py-16 md:py-24 bg-white border-t border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-12">
+        {/* <div className="flex items-center justify-between mb-12">
           <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading">✨ Featured Picks</h2>
           <a href="#" className="text-button hover:text-button-hover font-body text-sm font-semibold cursor-pointer">
             View All →
           </a>
-        </div>
+        </div> */}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {products.map((product: any) => (

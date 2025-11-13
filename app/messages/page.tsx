@@ -184,7 +184,7 @@ function MessagesContent() {
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-[#FEF5F6] via-white to-[#FEF5F6]">
+    <div className="flex h-[calc(100vh-64px)] bg-gradient-to-br from-[#FEF5F6] via-white to-[#FEF5F6]">
       <ConnectionStatus isConnected={isConnected} />
       
       {/* Conversation List Sidebar */}

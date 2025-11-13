@@ -4,6 +4,11 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { ArchivalStatsCard } from "@/components/ArchivalStatsCard"
+import { SoldProductsTab } from "./SoldProductsTab"
+import { UnsoldProductsTab } from "./UnsoldProductsTab"
+import { ActiveProductsTab } from "./ActiveProductsTab"
+import { Package, TrendingUp, Archive } from "lucide-react"
 
 interface UserProfile {
   id: string
@@ -42,6 +47,7 @@ export default function ProfileComponent() {
   const [user, setUser] = useState<UserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<"active" | "sold" | "expired">("active")
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -457,6 +463,78 @@ export default function ProfileComponent() {
                   <span style={{ color: "var(--color-text)" }}>{formatDate(user.firstSaleAt)}</span>
                 </div>
               )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Archival Statistics */}
+        <div className="my-8">
+          <h2 className="text-2xl font-bold mb-6" style={{ color: "var(--color-heading)" }}>
+            Product Statistics
+          </h2>
+          <ArchivalStatsCard />
+        </div>
+
+        {/* Products Tabs Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle style={{ color: "var(--color-heading)" }}>My Products</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {/* Tab Navigation */}
+            <div className="border-b border-gray-200 mb-6">
+              <nav className="flex space-x-8">
+                <button
+                  onClick={() => setActiveTab("active")}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer ${
+                    activeTab === "active"
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Package className="w-4 h-4" />
+                    <span>Active Listings</span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab("sold")}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer ${
+                    activeTab === "sold"
+                      ? "border-green-500 text-green-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4" />
+                    <span>Sold Products</span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab("expired")}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer ${
+                    activeTab === "expired"
+                      ? "border-orange-500 text-orange-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Archive className="w-4 h-4" />
+                    <span>Expired Products</span>
+                  </div>
+                </button>
+              </nav>
+            </div>
+
+            {/* Tab Content */}
+            <div>
+              {activeTab === "active" && user && <ActiveProductsTab userId={user.id} />}
+
+              {activeTab === "sold" && <SoldProductsTab />}
+
+              {activeTab === "expired" && <UnsoldProductsTab />}
             </div>
           </CardContent>
         </Card>

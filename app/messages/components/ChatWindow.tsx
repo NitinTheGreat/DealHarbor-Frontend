@@ -409,7 +409,7 @@ export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) 
     }
   }, [conversation, messages, markAsRead]);
 
-  // WebSocket subscriptions
+  // WebSocket subscriptions with auto message refresh
   useEffect(() => {
     if (!user?.id || !conversationId) {
       console.log('[ChatWindow] ⏭️ Skipping WebSocket setup - missing user or conversationId:', { userId: user?.id, conversationId });
@@ -419,7 +419,7 @@ export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) 
     console.log('[ChatWindow] 🔌 Setting up WebSocket listeners for conversation:', conversationId);
     console.log('[ChatWindow] 📊 Current user:', user.id);
 
-    // Handle incoming messages
+    // Handle incoming messages with automatic update
     const handleNewMessage = (message: any) => {
       console.log('[ChatWindow] 📨 New message received:', message);
       console.log('[ChatWindow] 📍 Current conversation ID:', conversationId, 'Type:', typeof conversationId);
@@ -442,8 +442,8 @@ export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) 
           console.log('[ChatWindow] 🆕 Adding new message to state, total will be:', prev.length + 1);
           const newMessages = [...prev, normalizedMessage];
           
-          // Scroll to bottom after state update
-          setTimeout(scrollToBottom, 50);
+          // Scroll to bottom immediately for real-time feel
+          requestAnimationFrame(() => scrollToBottom());
           
           return newMessages;
         });
@@ -451,7 +451,7 @@ export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) 
         // Mark as read if not own message
         if (normalizedMessage.senderId !== user.id) {
           console.log('[ChatWindow] 👁️ Marking message as read (not from current user)');
-          setTimeout(() => markAsRead(), 500);
+          setTimeout(() => markAsRead(), 300);
         }
         
         // DON'T refresh conversation details here - it causes race conditions
@@ -663,9 +663,9 @@ export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) 
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-gradient-to-br from-gray-50 to-white">
+    <div className="flex-1 flex flex-col bg-gradient-to-br from-gray-50 to-white h-full overflow-hidden">
       {/* Chat Header */}
-      <div className="bg-white border-b border-gray-200 p-4 flex items-center gap-4 shadow-sm">
+      <div className="bg-white border-b border-gray-200 p-4 flex items-center gap-4 shadow-sm flex-shrink-0">
         {onBack && (
           <button
             onClick={onBack}
@@ -756,7 +756,7 @@ export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) 
       <div
         ref={messagesContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-4 space-y-4"
+        className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0"
       >
         {loadingMore && (
           <div className="text-center py-2">
@@ -824,14 +824,26 @@ export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) 
           );
         })}
 
-        {/* Typing Indicator */}
+        {/* Typing Indicator with Animation */}
         {typingUsers.size > 0 && (
-          <div className="flex justify-start">
-            <div className="bg-white border border-gray-200 px-4 py-2 rounded-2xl">
-              <div className="flex gap-1">
-                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+          <div className="flex justify-start animate-fadeIn">
+            <div className="bg-white border border-gray-200 px-4 py-3 rounded-2xl shadow-sm">
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  <span 
+                    className="w-2 h-2 bg-gradient-to-r from-[#D97E96] to-[#E598AD] rounded-full animate-bounce" 
+                    style={{ animationDelay: '0ms', animationDuration: '1s' }} 
+                  />
+                  <span 
+                    className="w-2 h-2 bg-gradient-to-r from-[#D97E96] to-[#E598AD] rounded-full animate-bounce" 
+                    style={{ animationDelay: '200ms', animationDuration: '1s' }} 
+                  />
+                  <span 
+                    className="w-2 h-2 bg-gradient-to-r from-[#D97E96] to-[#E598AD] rounded-full animate-bounce" 
+                    style={{ animationDelay: '400ms', animationDuration: '1s' }} 
+                  />
+                </div>
+                <span className="text-xs text-gray-500 ml-1">typing...</span>
               </div>
             </div>
           </div>
@@ -841,7 +853,7 @@ export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) 
       </div>
 
       {/* Message Input */}
-      <div className="bg-white border-t border-gray-200 p-4">
+      <div className="bg-white border-t border-gray-200 p-4 flex-shrink-0">
         <div className="flex items-center gap-3">
           <input
             type="text"

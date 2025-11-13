@@ -4,6 +4,8 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Heart, Share2, MessageCircle, Copy, Check } from "lucide-react"
 import { toast } from "sonner"
+import { useAuth } from "@/components/ClientAuth"
+import MarkAsSoldButton from "./MarkAsSoldButton"
 
 interface Props {
   productId: string
@@ -17,6 +19,7 @@ interface Props {
 
 export default function ProductActions({ productId, sellerId, product }: Props) {
   const router = useRouter()
+  const { user } = useAuth()
   const [isFavorited, setIsFavorited] = useState(false)
   const [favoriteLoading, setFavoriteLoading] = useState(false)
   const [showMessageModal, setShowMessageModal] = useState(false)
@@ -25,6 +28,8 @@ export default function ProductActions({ productId, sellerId, product }: Props) 
   const [sendingMessage, setSendingMessage] = useState(false)
   const [copied, setCopied] = useState(false)
   const [hasNativeShare, setHasNativeShare] = useState(false)
+  
+  const isOwner = user?.id === sellerId
 
   // Check if favorited on mount
   useEffect(() => {
@@ -177,15 +182,19 @@ export default function ProductActions({ productId, sellerId, product }: Props) 
   return (
     <>
       <div className="space-y-3">
-        {/* Chat with Seller Button */}
-        <button
-          onClick={handleChatWithSeller}
-          className="w-full px-4 py-3 bg-gradient-to-r from-[#D97E96] to-[#E598AD] text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
-          style={{ fontFamily: "var(--font-button)" }}
-        >
-          <MessageCircle className="w-5 h-5" />
-          Chat with Seller
-        </button>
+        {/* Show Mark as Sold for owner, otherwise show Chat button */}
+        {isOwner ? (
+          <MarkAsSoldButton productId={productId} productTitle={product.title} />
+        ) : (
+          <button
+            onClick={handleChatWithSeller}
+            className="w-full px-4 py-3 bg-gradient-to-r from-[#D97E96] to-[#E598AD] text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+            style={{ fontFamily: "var(--font-button)" }}
+          >
+            <MessageCircle className="w-5 h-5" />
+            Chat with Seller
+          </button>
+        )}
 
         <div className="grid grid-cols-2 gap-2">
           {/* Favorite Button */}
