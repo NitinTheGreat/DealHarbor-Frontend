@@ -151,9 +151,9 @@ export default function LoginForm() {
           console.log("LoginForm: Auth status check completed, user:", authUser)
 
           if (authUser) {
-            console.log("LoginForm: User authenticated, navigating to profile")
+            console.log("LoginForm: User authenticated, navigating to products")
             // Now navigate
-            const redirectTo = redirectFrom || "/profile"
+            const redirectTo = redirectFrom || "/products"
             router.push(redirectTo)
           } else {
             console.error("LoginForm: Failed to verify auth after login")

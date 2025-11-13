@@ -205,7 +205,7 @@ export default function ProductListingFormStepped() {
         throw new Error(errorData.message || errorData.error || "Failed to create product")
       }
 
-      toast.success("Product listed successfully!")
+      toast.success("Product submitted for review successfully!")
       router.push("/products")
     } catch (error: any) {
       console.error("Error creating product:", error)
@@ -624,9 +624,9 @@ export default function ProductListingFormStepped() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 py-3 bg-gradient-to-r from-button to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all"
+                  className="flex-1 py-3 bg-gradient-to-r from-button to-pink-700 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all"
                 >
-                  {isLoading ? "Creating..." : "List Product 🎉"}
+                  {isLoading ? "Creating..." : "List Product"}
                 </button>
               )}
 

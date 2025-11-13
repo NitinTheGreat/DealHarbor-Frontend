@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: "DealHarbor - University Marketplace",
   description: "Buy and sell items within your university community safely and securely.",
   keywords: ["university", "marketplace", "students", "buy", "sell", "dealharbor"],
-  authors: [{ name: "DealHarbor Team" }],
+  authors: [{ name: "Nitin Pandey" }],
   robots: "index, follow",
   manifest: "/manifest.json",
   themeColor: "#D97E96",

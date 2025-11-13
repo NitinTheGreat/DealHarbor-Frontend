@@ -16,18 +16,6 @@ export default function AppHeader() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
 
-  // Don't show header on these pages
-  const excludedPaths = ["/", "/login", "/signup", "/forgot-password", "/verify-student"]
-  if (excludedPaths.includes(pathname)) return null
-
-  const handleSearch = (e: FormEvent) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
-      setSearchQuery("")
-    }
-  }
-
   const breadcrumbs = useMemo(() => {
     const paths = pathname.split("/").filter(Boolean)
     const items: BreadcrumbItem[] = [
@@ -66,6 +54,18 @@ export default function AppHeader() {
 
     return items
   }, [pathname])
+
+  const handleSearch = (e: FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+      setSearchQuery("")
+    }
+  }
+
+  // Don't show header on these pages - check AFTER all hooks
+  const excludedPaths = ["/", "/login", "/signup", "/forgot-password", "/verify-student"]
+  if (excludedPaths.includes(pathname)) return null
 
   return (
     <div className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
