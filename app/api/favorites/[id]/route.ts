@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { cookies } from "next/headers"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
 export async function POST(
   request: NextRequest,
@@ -9,19 +8,32 @@ export async function POST(
 ) {
   try {
     const { id } = await params
-    const cookieStore = await cookies()
-    const authToken = cookieStore.get("JSESSIONID")?.value
 
-    if (!authToken) {
+    // Get cookies from the incoming request and forward them to backend
+    const cookieHeader = request.headers.get("cookie")
+    const authHeader = request.headers.get("authorization")
+
+    if (!cookieHeader && !authHeader) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const res = await fetch(`${API_BASE}/favorites/${id}`, {
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    }
+
+    // Forward cookies from browser to backend
+    if (cookieHeader) {
+      headers["Cookie"] = cookieHeader
+    }
+
+    // Forward Authorization header if present
+    if (authHeader) {
+      headers["Authorization"] = authHeader
+    }
+
+    const res = await fetch(`${API_BASE}/api/favorites/${id}`, {
       method: "POST",
-      headers: {
-        Cookie: `JSESSIONID=${authToken}`,
-      },
-      credentials: "include",
+      headers,
     })
 
     if (!res.ok) {
@@ -32,7 +44,8 @@ export async function POST(
       )
     }
 
-    return NextResponse.json({ success: true })
+    const data = await res.json().catch(() => ({ success: true }))
+    return NextResponse.json(data)
   } catch (error) {
     console.error("Error adding favorite:", error)
     return NextResponse.json(
@@ -48,19 +61,32 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-    const cookieStore = await cookies()
-    const authToken = cookieStore.get("JSESSIONID")?.value
 
-    if (!authToken) {
+    // Get cookies from the incoming request and forward them to backend
+    const cookieHeader = request.headers.get("cookie")
+    const authHeader = request.headers.get("authorization")
+
+    if (!cookieHeader && !authHeader) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const res = await fetch(`${API_BASE}/favorites/${id}`, {
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    }
+
+    // Forward cookies from browser to backend
+    if (cookieHeader) {
+      headers["Cookie"] = cookieHeader
+    }
+
+    // Forward Authorization header if present
+    if (authHeader) {
+      headers["Authorization"] = authHeader
+    }
+
+    const res = await fetch(`${API_BASE}/api/favorites/${id}`, {
       method: "DELETE",
-      headers: {
-        Cookie: `JSESSIONID=${authToken}`,
-      },
-      credentials: "include",
+      headers,
     })
 
     if (!res.ok) {
@@ -71,7 +97,8 @@ export async function DELETE(
       )
     }
 
-    return NextResponse.json({ success: true })
+    const data = await res.json().catch(() => ({ success: true }))
+    return NextResponse.json(data)
   } catch (error) {
     console.error("Error removing favorite:", error)
     return NextResponse.json(

@@ -1,21 +1,28 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { Heart, Package, Star, Eye, Truck } from "lucide-react"
+import { Heart, Package, Star, Eye, Truck, CheckCircle, Loader2 } from "lucide-react"
+import { toast } from "sonner"
 import type { ProductResponse } from "@/lib/types/product"
 
 interface ProductCardProps {
   product: ProductResponse
+  initialFavorited?: boolean
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ product, initialFavorited = false }: ProductCardProps) {
+  const [isFavorited, setIsFavorited] = useState(initialFavorited)
+  const [isLoading, setIsLoading] = useState(false)
+  const [favoriteCount, setFavoriteCount] = useState(Number((product as any)?.favorites ?? 0))
+
   const hasDiscount = product.originalPrice && product.originalPrice > product.price
   const discountPercent = hasDiscount && product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0
 
-  // Image source resolution per backend notes: prefer primaryImageUrl, else first of images[], else imageUrls[0]
+  // Image source resolution
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
   const anyProduct = product as any
   const primaryImageUrl: string | undefined = anyProduct?.primaryImageUrl
@@ -27,6 +34,38 @@ export default function ProductCard({ product }: ProductCardProps) {
       ? rawImage
       : `${API_BASE}${rawImage}`
     : undefined
+
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    setIsLoading(true)
+
+    try {
+      const method = isFavorited ? "DELETE" : "POST"
+      const res = await fetch(`/api/favorites/${product.id}`, {
+        method,
+        credentials: "include",
+      })
+
+      if (res.status === 401) {
+        toast.error("Please login to add favorites")
+        return
+      }
+
+      if (!res.ok) {
+        throw new Error("Failed to update favorite")
+      }
+
+      setIsFavorited(!isFavorited)
+      setFavoriteCount(prev => isFavorited ? prev - 1 : prev + 1)
+      toast.success(isFavorited ? "Removed from favorites" : "Added to favorites")
+    } catch (error) {
+      toast.error("Failed to update favorite")
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const getConditionColor = (condition: string) => {
     switch (condition) {
@@ -49,7 +88,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Link href={`/products/${product.id}`} className="cursor-pointer">
-      <div className="group relative bg-white rounded-xl border-2 border-gray-200 hover:border-button transition-all duration-200 overflow-hidden hover:shadow-lg">
+      <div className="group relative bg-white rounded-xl border-2 border-gray-200 hover:border-button transition-all duration-200 overflow-hidden hover:shadow-lg h-full flex flex-col">
         {/* Image Container */}
         <div className="relative aspect-square overflow-hidden bg-gray-100">
           {resolvedImage ? (
@@ -82,14 +121,19 @@ export default function ProductCard({ product }: ProductCardProps) {
 
           {/* Favorite Button */}
           <button
-            onClick={(e) => {
-              e.preventDefault()
-              // TODO: Implement favorite functionality
-              console.log("Add to favorites:", product.id)
-            }}
-            className="absolute top-2 right-2 p-2 bg-white/90 hover:bg-white rounded-full shadow-md transition-colors cursor-pointer"
+            onClick={handleFavoriteClick}
+            disabled={isLoading}
+            className={`absolute top-2 right-2 p-2 rounded-full shadow-md transition-all cursor-pointer ${isFavorited ? "bg-red-50 hover:bg-red-100" : "bg-white/90 hover:bg-white"
+              }`}
           >
-            <Heart className="h-5 w-5 text-gray-600 hover:text-red-500 transition-colors" />
+            {isLoading ? (
+              <Loader2 className="h-5 w-5 text-gray-400 animate-spin" />
+            ) : (
+              <Heart
+                className={`h-5 w-5 transition-colors ${isFavorited ? "fill-red-500 text-red-500" : "text-gray-600 hover:text-red-500"
+                  }`}
+              />
+            )}
           </button>
 
           {/* Condition Badge */}
@@ -101,10 +145,10 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
 
         {/* Product Info */}
-        <div className="p-4">
-          {/* Title */}
+        <div className="p-4 flex flex-col flex-1">
+          {/* Title - fixed height with 2 lines max */}
           <h3
-            className="font-semibold text-lg text-heading line-clamp-2 mb-2 group-hover:text-button transition-colors"
+            className="font-semibold text-lg text-heading line-clamp-2 mb-2 group-hover:text-button transition-colors min-h-[3.5rem]"
             style={{ fontFamily: "var(--font-heading)" }}
           >
             {product.title}
@@ -141,7 +185,9 @@ export default function ProductCard({ product }: ProductCardProps) {
                 {(product as any)?.seller?.studentVerified || (product as any)?.seller?.isStudentVerified ? (
                   <>
                     <span>•</span>
-                    <span className="text-green-600">✓ Verified</span>
+                    <span className="text-green-600 flex items-center gap-0.5">
+                      <CheckCircle className="w-3 h-3" /> Verified
+                    </span>
                   </>
                 ) : null}
               </div>
@@ -149,7 +195,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
 
           {/* Category & Stats */}
-          <div className="flex items-center justify-between text-xs text-gray-600">
+          <div className="flex items-center justify-between text-xs text-gray-600 mt-auto">
             <span className="px-2 py-1 bg-gray-100 rounded">{product?.category?.name || "Misc"}</span>
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1">
@@ -158,7 +204,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               </span>
               <span className="flex items-center gap-1">
                 <Heart className="w-3.5 h-3.5" />
-                {Number((product as any)?.favorites ?? 0)}
+                {favoriteCount}
               </span>
             </div>
           </div>

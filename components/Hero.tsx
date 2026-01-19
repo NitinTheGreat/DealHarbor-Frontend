@@ -162,14 +162,14 @@ export default function HeroSection() {
             </div>
 
             {/* Social Proof */}
-            <div className="flex items-center justify-center gap-6 pt-6 text-sm text-subheading">
+            {/* <div className="flex items-center justify-center gap-6 pt-6 text-sm text-subheading">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
                 <span className="font-medium">500+ Active Students</span>
               </div>
               <span className="text-gray-300">|</span>
               <span>1,200+ Products Listed</span>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

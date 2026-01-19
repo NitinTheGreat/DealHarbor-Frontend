@@ -1,8 +1,9 @@
 "use client"
 
 import type { ProductResponse } from "@/lib/types/product"
-import ProductCard from "./ProductCard"
+import ProductCard from "@/components/ProductCard"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Package } from "lucide-react"
 
 interface ProductGridProps {
   products: ProductResponse[]
@@ -34,7 +35,9 @@ export default function ProductGrid({ products, isLoading = false }: ProductGrid
   if (products.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 px-4">
-        <div className="text-6xl mb-4">📦</div>
+        <div className="mb-4">
+          <Package className="w-16 h-16 text-gray-300" />
+        </div>
         <h3 className="text-xl font-semibold text-heading mb-2" style={{ fontFamily: "var(--font-heading)" }}>
           No products found
         </h3>
