@@ -43,7 +43,7 @@ export default function ProductListingForm() {
           const data = await res.json()
           setCategories(data)
           console.log("Categories loaded:", data.length)
-          
+
           // Set first category as default
           if (data.length > 0) {
             setFormData(prev => ({ ...prev, categoryId: data[0].id }))
@@ -88,7 +88,8 @@ export default function ProductListingForm() {
       const form = new FormData()
       form.append("file", file)
 
-      const res = await fetch("http://localhost:8080/api/images/upload-product", {
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+      const res = await fetch(`${API_BASE}/api/images/upload-product`, {
         method: "POST",
         credentials: "include",
         body: form, // don't set Content-Type manually; browser will set boundaries
@@ -161,7 +162,7 @@ export default function ProductListingForm() {
       const data = await res.json()
       console.log("Product created successfully:", data)
       toast.success("Product listed successfully!")
-      
+
       // Redirect to products page
       router.push("/products")
     } catch (error: any) {
@@ -177,7 +178,7 @@ export default function ProductListingForm() {
       {/* Basic Information */}
       <section>
         <h2 className="text-2xl font-bold text-heading mb-4">Basic Information</h2>
-        
+
         <div className="space-y-4">
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
@@ -360,7 +361,7 @@ export default function ProductListingForm() {
       {/* Pricing */}
       <section>
         <h2 className="text-2xl font-bold text-heading mb-4">Pricing</h2>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
@@ -412,7 +413,7 @@ export default function ProductListingForm() {
       {/* Additional Details */}
       <section>
         <h2 className="text-2xl font-bold text-heading mb-4">Additional Details</h2>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label htmlFor="brand" className="block text-sm font-medium text-gray-700 mb-1">
@@ -482,7 +483,7 @@ export default function ProductListingForm() {
       {/* Delivery Options */}
       <section>
         <h2 className="text-2xl font-bold text-heading mb-4">Delivery Options</h2>
-        
+
         <div className="space-y-4">
           <div>
             <label htmlFor="pickupLocation" className="block text-sm font-medium text-gray-700 mb-1">

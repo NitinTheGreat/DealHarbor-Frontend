@@ -99,7 +99,8 @@ export default function ProductListingFormStepped() {
       console.log('📤 FormData created, file appended:', form.has('file'))
       console.log('📤 FormData entries:', Array.from(form.entries()).map(([k, v]) => [k, v instanceof File ? `File: ${v.name}` : v]))
 
-      const res = await fetch("http://localhost:8080/api/images/upload-product", {
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+      const res = await fetch(`${API_BASE}/api/images/upload-product`, {
         method: "POST",
         credentials: "include",
         body: form,

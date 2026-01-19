@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import withPWA from "next-pwa";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   images: {
     remotePatterns: [
       {
@@ -12,13 +13,22 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "*.amazonaws.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.elasticbeanstalk.com",
+        pathname: "/api/images/**",
+      },
+      {
+        protocol: "https",
         hostname: "owywyvyrhwydlrzxgfpv.supabase.co",
         pathname: "/storage/v1/object/public/**",
       },
       {
         protocol: "https",
         hostname: "ui-avatars.com",
-      
       },
     ],
   },
@@ -37,19 +47,19 @@ const pwaConfig = withPWA({
         cacheName: "google-fonts",
         expiration: {
           maxEntries: 4,
-          maxAgeSeconds: 365 * 24 * 60 * 60, // 1 year
+          maxAgeSeconds: 365 * 24 * 60 * 60,
         },
       },
     },
     {
-      urlPattern: /^http:\/\/localhost:8080\/api\/.*/i,
+      urlPattern: /\/api\/.*/i,
       handler: "NetworkFirst",
       options: {
         cacheName: "api-cache",
         networkTimeoutSeconds: 10,
         expiration: {
           maxEntries: 50,
-          maxAgeSeconds: 5 * 60, // 5 minutes
+          maxAgeSeconds: 5 * 60,
         },
       },
     },
@@ -60,7 +70,7 @@ const pwaConfig = withPWA({
         cacheName: "image-cache",
         expiration: {
           maxEntries: 100,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+          maxAgeSeconds: 30 * 24 * 60 * 60,
         },
       },
     },
@@ -71,7 +81,7 @@ const pwaConfig = withPWA({
         cacheName: "static-resources",
         expiration: {
           maxEntries: 60,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+          maxAgeSeconds: 30 * 24 * 60 * 60,
         },
       },
     },
