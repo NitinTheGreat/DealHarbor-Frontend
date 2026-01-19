@@ -219,11 +219,10 @@ export default function LoginForm() {
             value={formData.email}
             onChange={(e) => handleInputChange("email", e.target.value)}
             onBlur={handleEmailBlur}
-            className={`w-full pl-12 pr-12 py-4 border-2 rounded-xl font-body text-text placeholder-gray-500 focus:outline-none focus:ring-0 focus:border-button transition-all duration-200 bg-white/80 backdrop-blur-sm ${
-              errors.email
+            className={`w-full pl-12 pr-12 py-4 border-2 rounded-xl font-body text-text placeholder-gray-500 focus:outline-none focus:ring-0 focus:border-button transition-all duration-200 bg-white/80 backdrop-blur-sm ${errors.email
                 ? "border-red-300 bg-red-50/50 focus:border-red-400"
                 : "border-gray-300 hover:border-gray-400 focus:border-button"
-            }`}
+              }`}
             placeholder="Enter your email address"
             disabled={isPending}
           />
@@ -271,11 +270,10 @@ export default function LoginForm() {
             type={showPassword ? "text" : "password"}
             value={formData.password}
             onChange={(e) => handleInputChange("password", e.target.value)}
-            className={`w-full pl-12 pr-12 py-4 border-2 rounded-xl font-body text-text placeholder-gray-500 focus:outline-none focus:ring-0 focus:border-button transition-all duration-200 bg-white/80 backdrop-blur-sm ${
-              errors.password
+            className={`w-full pl-12 pr-12 py-4 border-2 rounded-xl font-body text-text placeholder-gray-500 focus:outline-none focus:ring-0 focus:border-button transition-all duration-200 bg-white/80 backdrop-blur-sm ${errors.password
                 ? "border-red-300 bg-red-50/50 focus:border-red-400"
                 : "border-gray-300 hover:border-gray-400 focus:border-button"
-            }`}
+              }`}
             placeholder="Enter your password"
             disabled={isPending}
           />
@@ -351,6 +349,10 @@ export default function LoginForm() {
       <div className="grid grid-cols-2 gap-4">
         <button
           type="button"
+          onClick={() => {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+            window.location.href = `${apiUrl}/oauth2/authorization/google`
+          }}
           className="py-3 px-4 border-2 border-gray-300 rounded-xl font-body text-text hover:bg-white/80 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 disabled:opacity-50 hover:shadow-md group bg-white/60 backdrop-blur-sm"
           disabled={isPending}
         >
@@ -379,6 +381,10 @@ export default function LoginForm() {
 
         <button
           type="button"
+          onClick={() => {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+            window.location.href = `${apiUrl}/oauth2/authorization/github`
+          }}
           className="py-3 px-4 border-2 border-gray-300 rounded-xl font-body text-text hover:bg-white/80 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 disabled:opacity-50 hover:shadow-md group bg-white/60 backdrop-blur-sm"
           disabled={isPending}
         >
@@ -393,3 +399,4 @@ export default function LoginForm() {
     </form>
   )
 }
+

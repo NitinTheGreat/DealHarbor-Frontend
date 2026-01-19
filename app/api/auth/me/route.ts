@@ -7,15 +7,30 @@ export async function GET(req: NextRequest) {
   try {
     // Get cookies from the incoming request and forward them to backend
     const cookieHeader = req.headers.get("cookie")
+
+    // Check for Authorization header (JWT token from OAuth)
+    const authHeader = req.headers.get("authorization")
+
     console.log("/api/auth/me - Forwarding cookies:", cookieHeader)
+    console.log("/api/auth/me - Auth header present:", !!authHeader)
+
+    const headers: HeadersInit = {
+      Accept: "application/json",
+    }
+
+    // Forward cookies from browser to backend
+    if (cookieHeader) {
+      headers["Cookie"] = cookieHeader
+    }
+
+    // Forward Authorization header if present (for JWT token auth)
+    if (authHeader) {
+      headers["Authorization"] = authHeader
+    }
 
     const backendRes = await fetch(`${API_BASE_URL}/api/auth/me`, {
       method: "GET",
-      headers: {
-        Accept: "application/json",
-        // Forward cookies from browser to backend
-        ...(cookieHeader && { Cookie: cookieHeader }),
-      },
+      headers,
     })
 
     console.log("/api/auth/me - Backend response status:", backendRes.status)
