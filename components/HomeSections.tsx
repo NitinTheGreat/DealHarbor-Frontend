@@ -24,11 +24,11 @@ const getProductImage = (product: any): string => {
   const firstImageFromImages = product?.images?.[0]?.imageUrl
   const firstLegacy = product?.imageUrls?.[0]
   const nestedPrimaryImage = product?.primaryImage?.imageUrl
-  
+
   const rawImage = primaryImageUrl || firstImageFromImages || firstLegacy || nestedPrimaryImage
-  
+
   if (!rawImage) return "/placeholder.svg"
-  
+
   return rawImage.startsWith("http") ? rawImage : `${API_BASE}${rawImage}`
 }
 
@@ -156,7 +156,7 @@ function TrendingSection({ products }: any) {
     return (
       <section className="py-16 md:py-24 bg-gradient-to-b from-white to-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading mb-12">🔥 Trending Now</h2>
+          <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading mb-12">Trending Now</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="bg-gray-100 rounded-lg h-72 animate-pulse" />
@@ -173,7 +173,7 @@ function TrendingSection({ products }: any) {
         <div className="flex items-center justify-between mb-12">
           <div className="flex items-center gap-3">
             <Flame className="w-8 h-8 text-orange-500" />
-            <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading">🔥 Trending Now</h2>
+            <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading">Trending Now</h2>
           </div>
           <a href="/trending" className="text-button hover:text-button-hover font-body font-semibold transition cursor-pointer">
             View All →
@@ -278,7 +278,7 @@ function DealsSection({ products }: any) {
     return (
       <section className="py-16 md:py-24 bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading mb-12">⚡ Deals of the Day</h2>
+          <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading mb-12">Deals of the Day</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="bg-white rounded-lg h-80 animate-pulse" />
@@ -295,7 +295,7 @@ function DealsSection({ products }: any) {
         <div className="flex items-center justify-between mb-12">
           <div className="flex items-center gap-3">
             <Zap className="w-8 h-8 text-orange-500" />
-            <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading">⚡ Deals of the Day</h2>
+            <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading">Deals of the Day</h2>
           </div>
           <a href="/deals" className="text-button hover:text-button-hover font-body font-semibold transition cursor-pointer">
             View All →
@@ -376,7 +376,7 @@ function RecentArrivalsSection({ products }: any) {
     return (
       <section className="py-16 md:py-24 bg-white border-t border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading mb-12">⏱️ Recently Added</h2>
+          <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading mb-12">Recently Added</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="bg-gray-100 rounded-lg h-80 animate-pulse" />
@@ -393,7 +393,7 @@ function RecentArrivalsSection({ products }: any) {
         <div className="flex items-center justify-between mb-12">
           <div className="flex items-center gap-3">
             <Clock className="w-8 h-8 text-blue-500" />
-            <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading">⏱️ Recently Added</h2>
+            <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading">Recently Added</h2>
           </div>
           <a href="/recent" className="text-button hover:text-button-hover font-body font-semibold transition cursor-pointer">
             View All →
@@ -453,7 +453,7 @@ function TopRatedSection({ products }: any) {
     return (
       <section className="py-16 md:py-24 bg-gradient-to-b from-white to-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading mb-12">⭐ Top Rated by Sellers</h2>
+          <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading mb-12">Top Rated Sellers</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="bg-white rounded-lg h-80 animate-pulse" />
@@ -470,7 +470,7 @@ function TopRatedSection({ products }: any) {
         <div className="flex items-center justify-between mb-12">
           <div className="flex items-center gap-3">
             <Star className="w-8 h-8 text-yellow-500" />
-            <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading">⭐ Top Rated by Sellers</h2>
+            <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading">Top Rated Sellers</h2>
           </div>
           <a href="/top-rated" className="text-button hover:text-button-hover font-body font-semibold transition cursor-pointer">
             View All →
@@ -490,7 +490,7 @@ function TopRatedSection({ products }: any) {
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                 />
                 <div className="absolute top-3 left-3 bg-yellow-400 text-black px-3 py-1 rounded-full text-xs font-bold">
-                  ⭐ TOP SELLER
+                  TOP SELLER
                 </div>
                 <button className="absolute top-3 right-3 bg-white rounded-full p-2 shadow hover:bg-gray-100">
                   <Heart className="w-4 h-4 text-button" />
@@ -558,7 +558,7 @@ function FeaturedSection({ products }: any) {
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                 />
                 <div className="absolute top-3 left-3 bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold">
-                  ⭐ FEATURED
+                  FEATURED
                 </div>
                 <button className="absolute top-3 right-3 bg-white rounded-full p-2 shadow hover:bg-gray-100">
                   <Heart className="w-4 h-4 text-button" />
@@ -602,7 +602,7 @@ function CategoryPreviewSection({ categories }: any) {
     return (
       <section className="py-16 md:py-24 bg-white border-t border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading mb-12">📦 Explore by Category</h2>
+          <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading mb-12">Explore by Category</h2>
           <div className="space-y-12">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="h-48 bg-gray-200 rounded-lg animate-pulse" />
@@ -616,7 +616,7 @@ function CategoryPreviewSection({ categories }: any) {
   return (
     <section className="py-16 md:py-24 bg-white border-t border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading mb-4">📦 Explore by Category</h2>
+        <h2 className="font-heading text-3xl md:text-4xl font-bold text-heading mb-4">Explore by Category</h2>
         <p className="font-body text-subheading mb-12">Curated collections from our most popular categories</p>
 
         <div className="space-y-12">

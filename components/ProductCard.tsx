@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { Heart } from "lucide-react"
+import { Heart, Package, Star, Eye, Truck } from "lucide-react"
 import type { ProductResponse } from "@/lib/types/product"
 
 interface ProductCardProps {
@@ -61,8 +61,8 @@ export default function ProductCard({ product }: ProductCardProps) {
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           ) : (
-            <div className="flex items-center justify-center h-full text-gray-400">
-              <span className="text-4xl">📦</span>
+            <div className="flex items-center justify-center h-full bg-gray-200">
+              <Package className="w-12 h-12 text-gray-400" />
             </div>
           )}
 
@@ -134,8 +134,9 @@ export default function ProductCard({ product }: ProductCardProps) {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-text truncate">{product?.seller?.name || "Seller"}</p>
               <div className="flex items-center gap-1 text-xs text-gray-600">
-                <span>
-                  ⭐ {Number(product?.seller?.rating ?? 0).toFixed(1)}
+                <span className="flex items-center gap-1">
+                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                  {Number(product?.seller?.rating ?? 0).toFixed(1)}
                 </span>
                 {(product as any)?.seller?.studentVerified || (product as any)?.seller?.isStudentVerified ? (
                   <>
@@ -151,15 +152,24 @@ export default function ProductCard({ product }: ProductCardProps) {
           <div className="flex items-center justify-between text-xs text-gray-600">
             <span className="px-2 py-1 bg-gray-100 rounded">{product?.category?.name || "Misc"}</span>
             <div className="flex items-center gap-3">
-              <span>👁️ {Number((product as any)?.views ?? 0)}</span>
-              <span>❤️ {Number((product as any)?.favorites ?? 0)}</span>
+              <span className="flex items-center gap-1">
+                <Eye className="w-3.5 h-3.5" />
+                {Number((product as any)?.views ?? 0)}
+              </span>
+              <span className="flex items-center gap-1">
+                <Heart className="w-3.5 h-3.5" />
+                {Number((product as any)?.favorites ?? 0)}
+              </span>
             </div>
           </div>
 
           {/* Delivery Badge */}
           {product.deliveryAvailable && (
             <div className="mt-2 pt-2 border-t border-gray-100">
-              <span className="text-xs text-green-600 font-medium">🚚 Delivery Available</span>
+              <span className="text-xs text-green-600 font-medium flex items-center gap-1">
+                <Truck className="w-3.5 h-3.5" />
+                Delivery Available
+              </span>
             </div>
           )}
         </div>

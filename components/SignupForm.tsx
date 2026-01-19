@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { User, Mail, Lock, FileText, CheckCircle, PartyPopper, GraduationCap, Check } from "lucide-react"
 import { TermsModal } from "@/components/ui/terms-modal"
 import { PasswordStrength } from "@/components/ui/password-strength"
 import { PasswordMatch } from "@/components/ui/password-match"
@@ -32,21 +33,19 @@ function StepIndicator({ currentStep, totalSteps }: { currentStep: number; total
       {Array.from({ length: totalSteps }).map((_, i) => (
         <React.Fragment key={i}>
           <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 ${
-              i < currentStep
+            className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 ${i < currentStep
                 ? "bg-[#D97E96] text-white scale-110"
                 : i === currentStep
                   ? "bg-[#D97E96] text-white ring-4 ring-[#F5E6E8] scale-110"
                   : "bg-[#E8D4D8] text-[#718096]"
-            }`}
+              }`}
           >
-            {i < currentStep ? "✓" : i + 1}
+            {i < currentStep ? <Check className="w-4 h-4" /> : i + 1}
           </div>
           {i < totalSteps - 1 && (
             <div
-              className={`w-12 h-1 rounded-full transition-all duration-300 ${
-                i < currentStep ? "bg-[#D97E96]" : "bg-[#E8D4D8]"
-              }`}
+              className={`w-12 h-1 rounded-full transition-all duration-300 ${i < currentStep ? "bg-[#D97E96]" : "bg-[#E8D4D8]"
+                }`}
             />
           )}
         </React.Fragment>
@@ -60,7 +59,8 @@ function PersonalInfoStep({ formData, isLoading, onChange }: any) {
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-[#2D3748] mb-4 flex items-center gap-2">
-          <span>👤</span> Personal Information
+          <User className="w-5 h-5 text-[#D97E96]" />
+          Personal Information
         </h3>
         <p className="text-sm text-[#718096] mb-6">Let us know who you are. We'll use this to create your account.</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -108,7 +108,8 @@ function ContactInfoStep({ formData, isLoading, onChange }: any) {
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-[#2D3748] mb-4 flex items-center gap-2">
-          <span>📧</span> Contact Information
+          <Mail className="w-5 h-5 text-[#D97E96]" />
+          Contact Information
         </h3>
         <p className="text-sm text-[#718096] mb-6">We'll use this to verify your account and keep you updated.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -122,7 +123,9 @@ function ContactInfoStep({ formData, isLoading, onChange }: any) {
               placeholder="john.doe@vitstudent.ac.in"
               className="w-full px-4 py-3 bg-white/90 backdrop-blur-sm border border-[#E8D4D8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97E96] focus:border-transparent transition-all duration-200 placeholder:text-[#718096] disabled:bg-[#F5E6E8] disabled:cursor-not-allowed hover:border-[#C9647A]"
             />
-            <p className="mt-2 text-xs text-[#D97E96] font-medium">✓ VIT emails get automatic student verification</p>
+            <p className="mt-2 text-xs text-[#D97E96] font-medium flex items-center gap-1">
+              <CheckCircle className="w-3 h-3" /> VIT emails get automatic student verification
+            </p>
           </div>
           <div>
             <label className="block text-sm font-semibold text-[#333333] mb-2">Phone Number (Optional)</label>
@@ -147,7 +150,8 @@ function PasswordStep({ password, confirmPassword, isLoading, onPasswordChange, 
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-[#2D3748] mb-4 flex items-center gap-2">
-          <span>🔐</span> Create Password
+          <Lock className="w-5 h-5 text-[#D97E96]" />
+          Create Password
         </h3>
         <p className="text-sm text-[#718096] mb-6">Create a strong password to secure your account.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -186,7 +190,8 @@ function TermsStep({ termsAccepted, isLoading, onTermsChange, onShowTerms }: any
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-[#2D3748] mb-4 flex items-center gap-2">
-          <span>📋</span> Terms & Conditions
+          <FileText className="w-5 h-5 text-[#D97E96]" />
+          Terms & Conditions
         </h3>
         <p className="text-sm text-[#718096] mb-6">Please review and accept our terms before creating your account.</p>
         <div className="flex items-start gap-3 p-4 bg-[#F5E6E8] rounded-lg border border-[#E8D4D8]">
@@ -231,7 +236,9 @@ function SuccessState() {
     >
       <div className="max-w-md w-full text-center">
         <div className="mb-8 animate-bounce">
-          <div className="text-6xl mb-4">🎉</div>
+          <div className="flex justify-center mb-4">
+            <PartyPopper className="w-16 h-16 text-[#D97E96]" />
+          </div>
           <h2 className="text-3xl font-bold text-[#2D3748] mb-2">Account Created!</h2>
           <p className="text-[#718096] text-lg">Welcome to DealHarbor! Your account is ready to use.</p>
         </div>
@@ -552,13 +559,16 @@ export function SignupFormContainer() {
       >
         <div className="max-w-md w-full">
           <div className="text-center mb-8">
-            <div className="text-4xl mb-4">📧</div>
+            <div className="flex justify-center mb-4">
+              <Mail className="w-12 h-12 text-[#D97E96]" />
+            </div>
             <h1 className="text-3xl font-bold text-[#2D3748] mb-2">Verify Your Email</h1>
             <p className="text-sm text-[#718096] mb-1">We've sent a 6-digit verification code to</p>
             <p className="font-semibold text-sm text-[#D97E96] break-all">{registeredEmail}</p>
             {isUniversityEmail && (
-              <p className="text-xs mt-3 p-3 bg-[#F5E6E8] text-[#C9647A] rounded-lg border border-[#E8D4D8]">
-                🎓 VIT email detected! Your student status will be verified automatically.
+              <p className="text-xs mt-3 p-3 bg-[#F5E6E8] text-[#C9647A] rounded-lg border border-[#E8D4D8] flex items-center gap-2">
+                <GraduationCap className="w-4 h-4 flex-shrink-0" />
+                VIT email detected! Your student status will be verified automatically.
               </p>
             )}
           </div>
