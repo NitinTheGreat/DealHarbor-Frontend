@@ -1,0 +1,16 @@
+# Sitemap and Robots.txt for DealHarbor
+# Next.js will auto-generate these at build time
+
+User-agent: *
+Allow: /
+
+# Disallow admin/private routes
+Disallow: /api/
+Disallow: /profile
+Disallow: /messages
+
+# Sitemap location
+Sitemap: https://deal-harbor-frontend.vercel.app/sitemap.xml
+
+# Crawl delay (optional, respected by some bots)
+Crawl-delay: 1
