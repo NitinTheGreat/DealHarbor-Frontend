@@ -205,22 +205,28 @@ function QuickBrowseSection({ categories }: { categories: Category[] }) {
 // ============= COUNT UP ANIMATION =============
 function CountUp({ end, suffix = "" }: { end: number; suffix?: string }) {
   const [count, setCount] = useState(0)
-  const [hasAnimated, setHasAnimated] = useState(false)
+  const animatedRef = useRef(false)
 
   useEffect(() => {
-    if (hasAnimated || end === 0) return
-    setHasAnimated(true)
+    // Only animate once when end becomes non-zero
+    if (end === 0 || animatedRef.current) {
+      if (end > 0 && !animatedRef.current) {
+        // First time we get a real value
+      } else {
+        return
+      }
+    }
 
-    const duration = 2000 // 2 seconds
-    const steps = 60
+    animatedRef.current = true
+
+    const duration = 1500 // 1.5 seconds
+    const steps = 40
     const increment = end / steps
-    let current = 0
     let step = 0
 
     const timer = setInterval(() => {
       step++
-      current = Math.min(Math.floor(increment * step), end)
-      setCount(current)
+      setCount(Math.min(Math.floor(increment * step), end))
       if (step >= steps) {
         setCount(end)
         clearInterval(timer)
@@ -228,13 +234,9 @@ function CountUp({ end, suffix = "" }: { end: number; suffix?: string }) {
     }, duration / steps)
 
     return () => clearInterval(timer)
-  }, [end, hasAnimated])
+  }, [end])
 
-  return (
-    <span>
-      {count.toLocaleString()}{suffix}
-    </span>
-  )
+  return <span>{count.toLocaleString()}{suffix}</span>
 }
 
 // ============= COMPACT STATS BAR =============
@@ -279,6 +281,7 @@ function StatsBar({ stats }: { stats: HomepageStats | null }) {
     </section>
   )
 }
+
 
 // ============= JUST LISTED (FRESH PRODUCTS) =============
 function JustListedSection({ products }: { products: any[] }) {
@@ -338,7 +341,7 @@ function WhyDealHarborSection() {
     {
       icon: MapPin,
       title: "Meet on Campus",
-      description: "No shipping hassles. Meet at Tech Park, Food Court, or your hostel. Safe and convenient.",
+      description: "No shipping hassles. Meet anywhere in the campus - Food Court, or your hostel. Safe and convenient.",
     },
     {
       icon: Percent,
