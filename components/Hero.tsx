@@ -146,7 +146,7 @@ export default function HeroSection() {
             </form>
 
             {/* Trust Indicators with proper icons */}
-            <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-6 pt-6 sm:pt-8 flex-wrap">
+            {/* <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-6 pt-6 sm:pt-8 flex-wrap">
               <div className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/60 backdrop-blur-sm border border-gray-200 shadow-sm">
                 <CheckCircle className="w-4 h-4 text-green-500" />
                 <span className="font-body text-sm font-medium text-heading">Verified Students Only</span>
@@ -159,7 +159,7 @@ export default function HeroSection() {
                 <GraduationCap className="w-4 h-4 text-purple-500" />
                 <span className="font-body text-sm font-medium text-heading">VIT Exclusive</span>
               </div>
-            </div>
+            </div> */}
 
             {/* Social Proof */}
             {/* <div className="flex items-center justify-center gap-6 pt-6 text-sm text-subheading">
