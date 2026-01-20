@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Facebook, Twitter, Instagram } from "lucide-react"
+import { Facebook, Twitter, Instagram, Heart } from "lucide-react"
 
 export default function Footer() {
   return (
@@ -129,7 +129,7 @@ export default function Footer() {
         {/* Bottom */}
         <div className="border-t border-gray-700 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="font-body text-sm text-gray-300">© 2025 DealHarbor. All rights reserved.</p>
-          <p className="font-body text-sm text-gray-300">Made with ❤️ for students everywhere</p>
+          <p className="font-body text-sm text-gray-300 flex items-center gap-1">Made with <Heart className="w-4 h-4 fill-red-500 text-red-500" /> for students everywhere</p>
         </div>
       </div>
     </footer>
