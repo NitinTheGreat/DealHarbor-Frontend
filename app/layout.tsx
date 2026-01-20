@@ -7,36 +7,81 @@ import { AuthProvider } from "@/components/ClientAuth"
 import { Toaster } from "sonner"
 import AppHeader from "@/components/AppHeader"
 import { Analytics } from "@vercel/analytics/next"
+import { StructuredData } from "@/components/StructuredData"
 const inter = Inter({ subsets: ["latin"] })
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://deal-harbor-frontend.vercel.app"
+
 export const metadata: Metadata = {
-  title: "DealHarbor - University Marketplace",
-  description: "Buy and sell items within your university community safely and securely.",
-  keywords: ["university", "marketplace", "students", "buy", "sell", "dealharbor"],
-  authors: [{ name: "Nitin Pandey" }],
-  robots: "index, follow",
-  manifest: "/manifest.json",
-  themeColor: "#D97E96",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "DealHarbor",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "DealHarbor - University Student Marketplace | Buy & Sell Safely",
+    template: "%s | DealHarbor",
   },
+  description: "DealHarbor is the #1 trusted marketplace for university students. Buy and sell textbooks, electronics, furniture, and more within your campus community. Verified students only.",
+  keywords: [
+    "university marketplace",
+    "student marketplace",
+    "college buy sell",
+    "campus marketplace",
+    "student deals",
+    "textbooks for sale",
+    "used electronics",
+    "student furniture",
+    "dealharbor",
+    "deal harbor",
+    "university buy sell",
+    "college students marketplace",
+    "verified student marketplace",
+  ],
+  authors: [{ name: "DealHarbor Team" }],
+  creator: "DealHarbor",
+  publisher: "DealHarbor",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  manifest: "/manifest.json",
   icons: {
     icon: "/icons/icon.svg",
     apple: "/icons/icon.svg",
+    shortcut: "/favicon.svg",
   },
   openGraph: {
-    title: "DealHarbor - University Marketplace",
-    description: "Buy and sell items within your university community safely and securely.",
     type: "website",
     locale: "en_US",
+    url: siteUrl,
+    siteName: "DealHarbor",
+    title: "DealHarbor - University Student Marketplace",
+    description: "The #1 trusted marketplace for university students. Buy and sell textbooks, electronics, furniture, and more within your campus community.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "DealHarbor - University Student Marketplace",
+        type: "image/png",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "DealHarbor - University Marketplace",
-    description: "Buy and sell items within your university community safely and securely.",
+    title: "DealHarbor - University Student Marketplace",
+    description: "The #1 trusted marketplace for university students. Buy and sell textbooks, electronics, furniture, and more.",
+    images: ["/og-image.png"],
+    creator: "@dealharbor",
   },
+  alternates: {
+    canonical: siteUrl,
+  },
+  category: "Shopping",
 }
 
 export const viewport: Viewport = {
@@ -53,6 +98,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        <StructuredData />
 
         <AuthProvider>
           <AppHeader />
