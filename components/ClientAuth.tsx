@@ -46,12 +46,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log("ClientAuth: Checking auth status...")
 
-      // IMPORTANT: Use hardcoded backend URL for consistency with OAuth flow
-      const BACKEND_URL = "https://yqstbpypmm.ap-south-1.awsapprunner.com"
-
-      const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
+      // Uses Vercel proxy - relative URL ensures cookies work (same-domain)
+      const response = await fetch('/api/auth/me', {
         method: "GET",
-        credentials: "include", // Important: includes session cookie
+        credentials: "include", // REQUIRED for cookies
         headers: {
           Accept: "application/json",
         },
@@ -129,12 +127,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      // IMPORTANT: Use hardcoded backend URL for consistency
-      const BACKEND_URL = "https://yqstbpypmm.ap-south-1.awsapprunner.com"
-
-      await fetch(`${BACKEND_URL}/api/auth/logout`, {
+      // Uses Vercel proxy - relative URL ensures cookies work (same-domain)
+      await fetch('/api/auth/logout', {
         method: "POST",
-        credentials: "include",
+        credentials: "include", // REQUIRED for cookies
       })
 
       setUser(null)

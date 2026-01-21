@@ -4,7 +4,8 @@
 
 import { NextRequest, NextResponse } from "next/server"
 
-const BACKEND_URL = "https://yqstbpypmm.ap-south-1.awsapprunner.com"
+// Use environment variable for backend URL (server-side needs full URL)
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://yqstbpypmm.ap-south-1.awsapprunner.com"
 
 export async function POST(req: NextRequest) {
     try {

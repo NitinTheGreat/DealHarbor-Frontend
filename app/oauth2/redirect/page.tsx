@@ -57,17 +57,11 @@ function OAuthRedirectContent() {
 
                 setMessage("Establishing session...")
 
-                // IMPORTANT: Use hardcoded backend URL for OAuth flow
-                // This ensures reliability in production and avoids proxy issues
-                const BACKEND_URL = "https://yqstbpypmm.ap-south-1.awsapprunner.com"
-
-                // STEP 1: Exchange code for session cookie
-                console.log("OAuth: Exchanging code for session...", {
-                    backendUrl: BACKEND_URL,
-                    code: code.substring(0, 8) + "..." // Log partial code for debugging
-                })
+                // STEP 1: Exchange code for session cookie via Vercel proxy
+                // Using relative URL ensures cookies work (same-domain request)
+                console.log("OAuth: Exchanging code for session...")
                 const exchangeResponse = await fetch(
-                    `${BACKEND_URL}/api/oauth/exchange?code=${code}`,
+                    `/api/oauth/exchange?code=${code}`,
                     {
                         method: "POST",
                         credentials: "include", // CRITICAL: Receives session cookie
@@ -90,10 +84,10 @@ function OAuthRedirectContent() {
 
                 setMessage("Loading your profile...")
 
-                // STEP 2: Get user data with the new session
-                // IMPORTANT: Call backend DIRECTLY (not via proxy) with credentials
-                console.log("OAuth: Fetching user profile from backend...")
-                const userResponse = await fetch(`${BACKEND_URL}/api/auth/me`, {
+                // STEP 2: Get user data via Vercel proxy
+                // Using relative URL ensures cookies work (same-domain request)
+                console.log("OAuth: Fetching user profile...")
+                const userResponse = await fetch('/api/auth/me', {
                     method: "GET",
                     credentials: "include", // CRITICAL: Sends the session cookie
                     headers: {
