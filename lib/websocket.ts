@@ -57,10 +57,17 @@ class WebSocketService {
     }
 
     this.userId = userId;
+
+    // Use the same backend URL as the API calls
+    // IMPORTANT: This runs client-side, so we need NEXT_PUBLIC_ prefix
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://yqstbpypmm.ap-south-1.awsapprunner.com';
+    const wsUrl = `${backendUrl}/ws`;
+
     console.log(`🔌 Connecting WebSocket for user: ${userId}`);
+    console.log(`🔌 WebSocket URL: ${wsUrl}`);
 
     this.client = new Client({
-      webSocketFactory: () => new SockJS(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/ws`),
+      webSocketFactory: () => new SockJS(wsUrl),
       connectHeaders: {
         'X-User-Id': userId,
       },
@@ -73,18 +80,18 @@ class WebSocketService {
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
       onConnect: () => {
-        console.log('✅ WebSocket connected');
+        console.log('✅ WebSocket connected successfully');
         this.reconnectAttempts = 0;
         this.subscribeToChannels();
         this.updatePresence('ONLINE');
         this.notifyConnectionCallbacks(true);
       },
       onStompError: (frame) => {
-        console.error('❌ WebSocket error:', frame.headers['message'], frame.body);
+        console.error('❌ WebSocket STOMP error:', frame.headers['message'], frame.body);
         this.notifyConnectionCallbacks(false);
       },
-      onWebSocketClose: () => {
-        console.log('🔌 WebSocket closed');
+      onWebSocketClose: (event) => {
+        console.log('🔌 WebSocket closed:', event);
         this.notifyConnectionCallbacks(false);
         this.handleReconnect();
       },
