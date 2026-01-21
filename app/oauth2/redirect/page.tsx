@@ -57,13 +57,32 @@ function OAuthRedirectContent() {
 
                 setMessage("Setting up your session...")
 
-                // Wait 3 seconds for session to fully establish (same as email/password auth)
-                await new Promise(resolve => setTimeout(resolve, 3000))
+                // Wait a moment for session to fully establish
+                await new Promise(resolve => setTimeout(resolve, 1500))
 
                 setMessage("Verifying your account...")
 
-                // Session-based auth: call /api/auth/me with credentials to verify session cookie
-                const user = await checkAuthStatus()
+                // Session-based auth: Call backend DIRECTLY (not through Next.js proxy)
+                // This is required because the SESSION cookie is set on the backend domain
+                // and the browser will only send it when making requests to that domain
+                const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+
+                const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
+                    method: "GET",
+                    credentials: "include", // Critical: sends SESSION cookie
+                    headers: {
+                        Accept: "application/json",
+                    },
+                })
+
+                console.log("OAuth: Direct backend call status:", response.status)
+
+                if (!response.ok) {
+                    throw new Error(`Auth verification failed: ${response.status}`)
+                }
+
+                const user = await response.json()
+                console.log("OAuth: User authenticated:", user)
 
                 if (user) {
                     setStatus("success")
