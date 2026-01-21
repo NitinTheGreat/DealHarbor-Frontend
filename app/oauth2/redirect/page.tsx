@@ -109,22 +109,40 @@ function OAuthRedirectContent() {
                 console.log("OAuth: User authenticated:", fetchedUser)
 
                 if (fetchedUser) {
+                    // STEP 3: Establish frontend session by calling /api/auth/session
+                    // This sets a cookie that the middleware can read for subsequent requests
+                    console.log("OAuth: Establishing frontend session...")
+                    try {
+                        await fetch("/api/auth/session", {
+                            method: "POST",
+                            credentials: "include",
+                        })
+                        console.log("OAuth: Frontend session established")
+                    } catch (sessionErr) {
+                        console.warn("OAuth: Failed to establish frontend session:", sessionErr)
+                        // Continue anyway - client-side auth will still work
+                    }
+
                     // CRITICAL: Update auth context with the user data
                     // This ensures the AuthProvider has the user before navigation
                     await checkAuthStatus()
 
                     setStatus("success")
 
-                    // Check if user needs to verify student status (same flow as email/password auth)
-                    if (!fetchedUser.isStudentVerified) {
-                        setMessage(`Welcome${fetchedUser.firstName ? `, ${fetchedUser.firstName}` : ""}! Redirecting to student verification...`)
+                    // Check if user needs to verify student status
+                    // Backend may return either 'isStudentVerified' or 'verifiedStudent'
+                    const isVerified = fetchedUser.isStudentVerified || fetchedUser.verifiedStudent
+                    console.log("OAuth: Student verified status:", isVerified)
+
+                    if (!isVerified) {
+                        setMessage(`Welcome${fetchedUser.firstName || fetchedUser.name ? `, ${fetchedUser.firstName || fetchedUser.name.split(' ')[0]}` : ""}! Redirecting to student verification...`)
                         // Use window.location.href for full page navigation
                         // This ensures middleware can properly read the session cookies
                         setTimeout(() => {
                             window.location.href = "/verify-student"
                         }, 1500)
                     } else {
-                        setMessage(`Welcome back${fetchedUser.firstName ? `, ${fetchedUser.firstName}` : ""}! Redirecting...`)
+                        setMessage(`Welcome back${fetchedUser.firstName || fetchedUser.name ? `, ${fetchedUser.firstName || fetchedUser.name.split(' ')[0]}` : ""}! Redirecting...`)
                         // Use window.location.href for full page navigation
                         setTimeout(() => {
                             window.location.href = "/products"
