@@ -101,18 +101,37 @@ async function fetchProduct(id: string): Promise<Product> {
     ? `https://${process.env.VERCEL_URL}`
     : (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000")
 
-  const res = await fetch(`${baseUrl}/api/products/${id}`, {
-    next: { revalidate: 60 },
-    headers: {
-      "Content-Type": "application/json",
-    },
-  })
+  // Use VERCEL_URL for server-side fetching (auto-set by Vercel)
+  // VERCEL_URL doesn't include protocol, so we add https://
+  const baseUrl = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000")
 
-  if (!res.ok) {
-    throw new Error("Product not found")
+  const endpoint = `${baseUrl}/api/products/${id}`
+  console.log(`[ProductPage] Fetching product from: ${endpoint}`)
+  console.log(`[ProductPage] Base URL source: ${process.env.VERCEL_URL ? 'VERCEL_URL' : 'NEXT_PUBLIC_SITE_URL/fallback'}`)
+
+  try {
+    const res = await fetch(endpoint, {
+      next: { revalidate: 60 },
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+
+    console.log(`[ProductPage] Response status: ${res.status}`)
+
+    if (!res.ok) {
+      const text = await res.text()
+      console.error(`[ProductPage] Fetch failed. Status: ${res.status}, Body: ${text.slice(0, 500)}`)
+      throw new Error(`Product not found (Status: ${res.status})`)
+    }
+
+    return res.json()
+  } catch (error) {
+    console.error(`[ProductPage] Error fetching product:`, error)
+    throw error
   }
-
-  return res.json()
 }
 
 const conditionColors = {
