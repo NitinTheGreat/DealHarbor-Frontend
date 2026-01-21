@@ -57,15 +57,23 @@ function OAuthRedirectContent() {
 
                 setMessage("Establishing session...")
 
-                const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+                // IMPORTANT: Use hardcoded backend URL for OAuth flow
+                // This ensures reliability in production and avoids proxy issues
+                const BACKEND_URL = "https://yqstbpypmm.ap-south-1.awsapprunner.com"
 
                 // STEP 1: Exchange code for session cookie
-                console.log("OAuth: Exchanging code for session...")
+                console.log("OAuth: Exchanging code for session...", {
+                    backendUrl: BACKEND_URL,
+                    code: code.substring(0, 8) + "..." // Log partial code for debugging
+                })
                 const exchangeResponse = await fetch(
                     `${BACKEND_URL}/api/oauth/exchange?code=${code}`,
                     {
                         method: "POST",
                         credentials: "include", // CRITICAL: Receives session cookie
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
                     }
                 )
 
@@ -83,9 +91,14 @@ function OAuthRedirectContent() {
                 setMessage("Loading your profile...")
 
                 // STEP 2: Get user data with the new session
-                console.log("OAuth: Fetching user profile...")
+                // IMPORTANT: Call backend DIRECTLY (not via proxy) with credentials
+                console.log("OAuth: Fetching user profile from backend...")
                 const userResponse = await fetch(`${BACKEND_URL}/api/auth/me`, {
-                    credentials: "include", // Sends the session cookie
+                    method: "GET",
+                    credentials: "include", // CRITICAL: Sends the session cookie
+                    headers: {
+                        "Accept": "application/json",
+                    },
                 })
 
                 if (!userResponse.ok) {
