@@ -105,34 +105,41 @@ function OAuthRedirectContent() {
                     throw new Error("Failed to fetch user profile")
                 }
 
-                const user = await userResponse.json()
-                console.log("OAuth: User authenticated:", user)
+                const fetchedUser = await userResponse.json()
+                console.log("OAuth: User authenticated:", fetchedUser)
 
-                if (user) {
+                if (fetchedUser) {
+                    // CRITICAL: Update auth context with the user data
+                    // This ensures the AuthProvider has the user before navigation
+                    await checkAuthStatus()
+
                     setStatus("success")
 
                     // Check if user needs to verify student status (same flow as email/password auth)
-                    if (!user.isStudentVerified) {
-                        setMessage(`Welcome${user.firstName ? `, ${user.firstName}` : ""}! Redirecting to student verification...`)
+                    if (!fetchedUser.isStudentVerified) {
+                        setMessage(`Welcome${fetchedUser.firstName ? `, ${fetchedUser.firstName}` : ""}! Redirecting to student verification...`)
+                        // Use window.location.href for full page navigation
+                        // This ensures middleware can properly read the session cookies
                         setTimeout(() => {
-                            router.push("/verify-student")
+                            window.location.href = "/verify-student"
                         }, 1500)
                     } else {
-                        setMessage(`Welcome back${user.firstName ? `, ${user.firstName}` : ""}! Redirecting...`)
+                        setMessage(`Welcome back${fetchedUser.firstName ? `, ${fetchedUser.firstName}` : ""}! Redirecting...`)
+                        // Use window.location.href for full page navigation
                         setTimeout(() => {
-                            router.push("/products")
+                            window.location.href = "/products"
                         }, 1500)
                     }
                 } else {
                     setStatus("error")
                     setMessage("Failed to verify your session. Please try again.")
-                    setTimeout(() => router.push("/login"), 3000)
+                    setTimeout(() => window.location.href = "/login", 3000)
                 }
             } catch (err) {
                 console.error("OAuth callback error:", err)
                 setStatus("error")
                 setMessage("An unexpected error occurred. Please try again.")
-                setTimeout(() => router.push("/login"), 3000)
+                setTimeout(() => window.location.href = "/login", 3000)
             }
         }
 
