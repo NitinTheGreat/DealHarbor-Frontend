@@ -6,11 +6,11 @@ import { ChevronRight, Heart, Share2, MapPin, Truck, Eye, Star, ShieldCheck } fr
 import ProductImageGallery from "./components/ProductImageGallery"
 import ProductActions from "./components/ProductActions"
 import SellerCard from "./components/SellerCard"
-import ReviewSection from "./components/ReviewSection"
+// import ReviewSection from "./components/ReviewSection"  // Temporarily disabled
 import RelatedProducts from "./components/RelatedProducts"
 import ViewTracker from "./components/ViewTracker"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
 interface Product {
   id: string
@@ -48,42 +48,49 @@ interface Product {
   primaryImageUrl?: string
 }
 
-// Generate metadata for SEO and social sharing
+// Generate metadata for SEO and social sharing (WhatsApp, Twitter, Facebook)
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   try {
     const { id } = await params
     const product = await fetchProduct(id)
-    
-    const imageUrl = product.primaryImageUrl || product.images?.[0]?.imageUrl
-    const absoluteImageUrl = imageUrl?.startsWith("http") 
-      ? imageUrl 
-      : `${API_BASE}${imageUrl}`
 
-    const description = product.description.slice(0, 160)
-    const url = `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/products/${id}`
+    // Get the product image URL - prioritize primary image
+    const imageUrl = product.primaryImageUrl || product.images?.[0]?.imageUrl
+
+    // Ensure image URL is absolute for social sharing
+    let absoluteImageUrl = imageUrl
+    if (imageUrl && !imageUrl.startsWith("http")) {
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+      absoluteImageUrl = `${backendUrl}${imageUrl.startsWith("/") ? "" : "/"}${imageUrl}`
+    }
+
+    const description = product.description?.slice(0, 160) || `${product.title} - Available on DealHarbor`
+    const siteUrl = "https://dealharbor.tech"
+    const productUrl = `${siteUrl}/products/${id}`
 
     return {
-      title: `${product.title} - DealHarbor`,
+      title: `${product.title} - ₹${product.price.toLocaleString()} | DealHarbor`,
       description,
       openGraph: {
-        title: product.title,
+        title: `${product.title} - ₹${product.price.toLocaleString()}`,
         description,
-        url,
+        url: productUrl,
+        siteName: "DealHarbor",
         type: "website",
-        images: [
+        images: absoluteImageUrl ? [
           {
-            url: absoluteImageUrl || "/placeholder.png",
+            url: absoluteImageUrl,
             width: 1200,
             height: 630,
             alt: product.title,
           },
-        ],
+        ] : [],
       },
       twitter: {
         card: "summary_large_image",
-        title: product.title,
+        title: `${product.title} - ₹${product.price.toLocaleString()}`,
         description,
-        images: [absoluteImageUrl || "/placeholder.png"],
+        images: absoluteImageUrl ? [absoluteImageUrl] : [],
       },
     }
   } catch {
@@ -95,13 +102,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 async function fetchProduct(id: string): Promise<Product> {
-  // Use absolute URL for server-side fetching
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
-  const res = await fetch(`${baseUrl}/api/products/${id}`, {
+  // Call backend directly - simple and reliable
+  const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+  const res = await fetch(`${backendUrl}/api/products/${id}`, {
     next: { revalidate: 60 },
-    headers: {
-      "Content-Type": "application/json",
-    },
   })
 
   if (!res.ok) {
@@ -164,10 +168,10 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      
+
       <ViewTracker productId={id} />
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-[#FEF5F6] via-white to-[#F5F0FF]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Breadcrumbs */}
           <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-6">
@@ -193,8 +197,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               <ProductImageGallery images={product.images} title={product.title} />
 
               {/* Product Info */}
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">{product.title}</h1>
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6">
+                <h1 className="text-3xl font-bold text-[#2D3748] mb-4" style={{ fontFamily: 'var(--font-heading)' }}>{product.title}</h1>
 
                 {/* Tags */}
                 {product.tags && product.tags.length > 0 && (
@@ -262,18 +266,18 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 </div>
               </div>
 
-              {/* Reviews Section */}
-              <ReviewSection productId={id} />
+              {/* Reviews Section - Temporarily Disabled */}
+              {/* <ReviewSection productId={id} /> */}
             </div>
 
             {/* Right Column - Sticky Sidebar */}
             <div className="lg:col-span-1">
               <div className="sticky top-8 space-y-6">
-                {/* Price Card */}
-                <div className="bg-white rounded-lg shadow-sm p-6">
+                {/* Price Card - Premium styling */}
+                <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6">
                   <div className="mb-4">
                     <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-bold text-gray-900">₹{product.price.toLocaleString()}</span>
+                      <span className="text-3xl font-bold bg-gradient-to-r from-[#D97E96] to-purple-600 bg-clip-text text-transparent">₹{product.price.toLocaleString()}</span>
                       {product.originalPrice && (
                         <span className="text-lg text-gray-500 line-through">
                           ₹{product.originalPrice.toLocaleString()}
@@ -281,7 +285,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                       )}
                     </div>
                     {product.isNegotiable && (
-                      <span className="inline-block mt-2 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                      <span className="inline-block mt-2 px-3 py-1 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 text-xs font-semibold rounded-full border border-green-200">
                         Negotiable
                       </span>
                     )}
@@ -310,8 +314,8 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 />
 
                 {/* Location & Delivery Info */}
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Location & Delivery</h3>
+                <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6">
+                  <h3 className="text-lg font-semibold text-[#2D3748] mb-4" style={{ fontFamily: 'var(--font-heading)' }}>Location & Delivery</h3>
                   <div className="space-y-3">
                     {product.pickupLocation && (
                       <div className="flex items-start gap-3">

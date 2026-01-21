@@ -11,13 +11,12 @@ export interface User {
   profilePhotoUrl: string
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
-
 export async function getUser(): Promise<User | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+    // Uses Vercel proxy - relative URL ensures cookies work (same-domain)
+    const response = await fetch('/api/auth/me', {
       method: "GET",
-      credentials: "include", // Important: includes session cookie
+      credentials: "include", // REQUIRED for cookies
       headers: {
         Accept: "application/json",
       },

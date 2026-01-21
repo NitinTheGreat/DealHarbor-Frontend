@@ -20,13 +20,16 @@ export async function middleware(req: NextRequest) {
   }
 
   try {
-    // IMPORTANT: Use hardcoded backend URL for consistency with OAuth flow
-    // This ensures the middleware calls the same backend as the OAuth redirect
-    const API_BASE_URL = "https://yqstbpypmm.ap-south-1.awsapprunner.com"
+    // Use environment variable for backend URL (middleware runs on edge, needs full URL)
+    const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://yqstbpypmm.ap-south-1.awsapprunner.com"
     const cookieHeader = req.headers.get("cookie") || ""
 
     // Check for JWT token in cookies (set by OAuth flow)
     const authToken = req.cookies.get("dealharbor_auth_token")?.value
+
+    // Check for BACKEND_SESSION cookie (set by /api/auth/session after OAuth)
+    // This is needed because cross-domain cookies from the backend can't be read server-side
+    const backendSession = req.cookies.get("BACKEND_SESSION")?.value
 
     // Build headers for backend request
     const headers: HeadersInit = {
@@ -36,8 +39,14 @@ export async function middleware(req: NextRequest) {
       "expires": "0",
     }
 
-    // Forward browser cookies (JSESSIONID should be present on localhost domain)
-    if (cookieHeader) {
+    // Construct cookie header for backend
+    // Priority: BACKEND_SESSION (from OAuth) > existing cookies
+    if (backendSession) {
+      // Reconstruct JSESSIONID from our stored backend session
+      headers["cookie"] = `JSESSIONID=${backendSession}`
+      console.log("Middleware: Using BACKEND_SESSION for auth")
+    } else if (cookieHeader) {
+      // Forward browser cookies as-is (for traditional login)
       headers["cookie"] = cookieHeader
     }
 

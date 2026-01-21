@@ -57,17 +57,11 @@ function OAuthRedirectContent() {
 
                 setMessage("Establishing session...")
 
-                // IMPORTANT: Use hardcoded backend URL for OAuth flow
-                // This ensures reliability in production and avoids proxy issues
-                const BACKEND_URL = "https://yqstbpypmm.ap-south-1.awsapprunner.com"
-
-                // STEP 1: Exchange code for session cookie
-                console.log("OAuth: Exchanging code for session...", {
-                    backendUrl: BACKEND_URL,
-                    code: code.substring(0, 8) + "..." // Log partial code for debugging
-                })
+                // STEP 1: Exchange code for session cookie via Vercel proxy
+                // Using relative URL ensures cookies work (same-domain request)
+                console.log("OAuth: Exchanging code for session...")
                 const exchangeResponse = await fetch(
-                    `${BACKEND_URL}/api/oauth/exchange?code=${code}`,
+                    `/api/oauth/exchange?code=${code}`,
                     {
                         method: "POST",
                         credentials: "include", // CRITICAL: Receives session cookie
@@ -90,10 +84,10 @@ function OAuthRedirectContent() {
 
                 setMessage("Loading your profile...")
 
-                // STEP 2: Get user data with the new session
-                // IMPORTANT: Call backend DIRECTLY (not via proxy) with credentials
-                console.log("OAuth: Fetching user profile from backend...")
-                const userResponse = await fetch(`${BACKEND_URL}/api/auth/me`, {
+                // STEP 2: Get user data via Vercel proxy
+                // Using relative URL ensures cookies work (same-domain request)
+                console.log("OAuth: Fetching user profile...")
+                const userResponse = await fetch('/api/auth/me', {
                     method: "GET",
                     credentials: "include", // CRITICAL: Sends the session cookie
                     headers: {
@@ -109,22 +103,40 @@ function OAuthRedirectContent() {
                 console.log("OAuth: User authenticated:", fetchedUser)
 
                 if (fetchedUser) {
+                    // STEP 3: Establish frontend session by calling /api/auth/session
+                    // This sets a cookie that the middleware can read for subsequent requests
+                    console.log("OAuth: Establishing frontend session...")
+                    try {
+                        await fetch("/api/auth/session", {
+                            method: "POST",
+                            credentials: "include",
+                        })
+                        console.log("OAuth: Frontend session established")
+                    } catch (sessionErr) {
+                        console.warn("OAuth: Failed to establish frontend session:", sessionErr)
+                        // Continue anyway - client-side auth will still work
+                    }
+
                     // CRITICAL: Update auth context with the user data
                     // This ensures the AuthProvider has the user before navigation
                     await checkAuthStatus()
 
                     setStatus("success")
 
-                    // Check if user needs to verify student status (same flow as email/password auth)
-                    if (!fetchedUser.isStudentVerified) {
-                        setMessage(`Welcome${fetchedUser.firstName ? `, ${fetchedUser.firstName}` : ""}! Redirecting to student verification...`)
+                    // Check if user needs to verify student status
+                    // Backend may return either 'isStudentVerified' or 'verifiedStudent'
+                    const isVerified = fetchedUser.isStudentVerified || fetchedUser.verifiedStudent
+                    console.log("OAuth: Student verified status:", isVerified)
+
+                    if (!isVerified) {
+                        setMessage(`Welcome${fetchedUser.firstName || fetchedUser.name ? `, ${fetchedUser.firstName || fetchedUser.name.split(' ')[0]}` : ""}! Redirecting to student verification...`)
                         // Use window.location.href for full page navigation
                         // This ensures middleware can properly read the session cookies
                         setTimeout(() => {
                             window.location.href = "/verify-student"
                         }, 1500)
                     } else {
-                        setMessage(`Welcome back${fetchedUser.firstName ? `, ${fetchedUser.firstName}` : ""}! Redirecting...`)
+                        setMessage(`Welcome back${fetchedUser.firstName || fetchedUser.name ? `, ${fetchedUser.firstName || fetchedUser.name.split(' ')[0]}` : ""}! Redirecting...`)
                         // Use window.location.href for full page navigation
                         setTimeout(() => {
                             window.location.href = "/products"

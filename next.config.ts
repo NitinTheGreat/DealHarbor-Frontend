@@ -1,8 +1,27 @@
 import type { NextConfig } from "next";
 import withPWA from "next-pwa";
 
+// Backend URL for API proxy - use env variable with fallback
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://yqstbpypmm.ap-south-1.awsapprunner.com";
+
 const nextConfig: NextConfig = {
   output: "standalone",
+
+  // CRITICAL: Proxy all /api/* and /oauth2/* calls to backend
+  // This ensures cookies work correctly (same-domain requests)
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${BACKEND_URL}/api/:path*`,
+      },
+      {
+        source: '/oauth2/:path*',
+        destination: `${BACKEND_URL}/oauth2/:path*`,
+      },
+    ];
+  },
+
   images: {
     remotePatterns: [
       {
