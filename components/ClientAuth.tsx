@@ -46,7 +46,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log("ClientAuth: Checking auth status...")
 
-      const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+      // IMPORTANT: Use hardcoded backend URL for consistency with OAuth flow
+      const BACKEND_URL = "https://yqstbpypmm.ap-south-1.awsapprunner.com"
 
       const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
         method: "GET",
@@ -128,7 +129,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+      // IMPORTANT: Use hardcoded backend URL for consistency
+      const BACKEND_URL = "https://yqstbpypmm.ap-south-1.awsapprunner.com"
 
       await fetch(`${BACKEND_URL}/api/auth/logout`, {
         method: "POST",

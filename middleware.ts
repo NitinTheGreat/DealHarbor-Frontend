@@ -20,8 +20,9 @@ export async function middleware(req: NextRequest) {
   }
 
   try {
-    // Call backend directly to avoid any same-origin/mode pitfalls
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+    // IMPORTANT: Use hardcoded backend URL for consistency with OAuth flow
+    // This ensures the middleware calls the same backend as the OAuth redirect
+    const API_BASE_URL = "https://yqstbpypmm.ap-south-1.awsapprunner.com"
     const cookieHeader = req.headers.get("cookie") || ""
 
     // Check for JWT token in cookies (set by OAuth flow)
