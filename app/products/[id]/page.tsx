@@ -53,10 +53,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   try {
     const { id } = await params
     const product = await fetchProduct(id)
-    
+
     const imageUrl = product.primaryImageUrl || product.images?.[0]?.imageUrl
-    const absoluteImageUrl = imageUrl?.startsWith("http") 
-      ? imageUrl 
+    const absoluteImageUrl = imageUrl?.startsWith("http")
+      ? imageUrl
       : `${API_BASE}${imageUrl}`
 
     const description = product.description.slice(0, 160)
@@ -95,8 +95,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 async function fetchProduct(id: string): Promise<Product> {
-  // Use absolute URL for server-side fetching
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+  // Use VERCEL_URL for server-side fetching (auto-set by Vercel)
+  // VERCEL_URL doesn't include protocol, so we add https://
+  const baseUrl = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000")
+
   const res = await fetch(`${baseUrl}/api/products/${id}`, {
     next: { revalidate: 60 },
     headers: {
@@ -164,7 +168,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      
+
       <ViewTracker productId={id} />
 
       <div className="min-h-screen bg-gray-50">
