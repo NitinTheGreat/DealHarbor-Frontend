@@ -95,11 +95,6 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 async function fetchProduct(id: string): Promise<Product> {
-  // Use VERCEL_URL for server-side fetching (auto-set by Vercel)
-  // VERCEL_URL doesn't include protocol, so we add https://
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000")
 
   // Use VERCEL_URL for server-side fetching (auto-set by Vercel)
   // VERCEL_URL doesn't include protocol, so we add https://
