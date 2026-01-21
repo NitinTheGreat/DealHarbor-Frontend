@@ -46,20 +46,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log("ClientAuth: Checking auth status...")
 
-      const storedToken = localStorage.getItem(AUTH_TOKEN_KEY)
-      const headers: HeadersInit = {
-        Accept: "application/json",
-      }
+      const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
-      // Include token in Authorization header if available
-      if (storedToken) {
-        headers["Authorization"] = `Bearer ${storedToken}`
-      }
-
-      const response = await fetch("/api/auth/me", {
+      const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
         method: "GET",
         credentials: "include", // Important: includes session cookie
-        headers,
+        headers: {
+          Accept: "application/json",
+        },
       })
 
       console.log("ClientAuth: Response status:", response.status)
@@ -72,11 +66,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         const errorText = await response.text()
         console.log("ClientAuth: No user found (status:", response.status, ")", errorText)
-        // If auth failed with a token, it might be expired - clear it
-        if (storedToken && response.status === 401) {
-          localStorage.removeItem(AUTH_TOKEN_KEY)
-          setToken(null)
-        }
         setUser(null)
         return null
       }
@@ -139,29 +128,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      // Get token for logout request
-      const storedToken = localStorage.getItem(AUTH_TOKEN_KEY)
-      const headers: HeadersInit = {}
-      if (storedToken) {
-        headers["Authorization"] = `Bearer ${storedToken}`
-      }
+      const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
-      await fetch("/api/auth/logout", {
+      await fetch(`${BACKEND_URL}/api/auth/logout`, {
         method: "POST",
         credentials: "include",
-        headers,
       })
 
-      // Clear token from localStorage
-      localStorage.removeItem(AUTH_TOKEN_KEY)
-      setToken(null)
       setUser(null)
       window.location.href = "/login"
     } catch (error) {
       console.error("Logout error:", error)
       // Force logout even if API fails
-      localStorage.removeItem(AUTH_TOKEN_KEY)
-      setToken(null)
       setUser(null)
       window.location.href = "/login"
     }

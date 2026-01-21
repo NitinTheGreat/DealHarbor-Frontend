@@ -29,12 +29,12 @@ function OAuthRedirectContent() {
 
         const handleOAuthCallback = async () => {
             try {
-                // Check URL params for OAuth result
-                const oauthSuccess = searchParams.get("oauth") === "success"
+                // NEW FLOW: Backend redirects with ?code=<UUID> instead of ?oauth=success
+                const code = searchParams.get("code")
                 const error = searchParams.get("error")
 
                 console.log("OAuth Redirect: Received params", {
-                    oauthSuccess,
+                    code: code ? "present" : "missing",
                     error,
                     fullUrl: window.location.href
                 })
@@ -47,41 +47,52 @@ function OAuthRedirectContent() {
                     return
                 }
 
-                // If no success param, something went wrong
-                if (!oauthSuccess) {
+                // Check for exchange code
+                if (!code) {
                     setStatus("error")
-                    setMessage("OAuth authentication was not completed. Please try again.")
+                    setMessage("Invalid OAuth response - no exchange code received.")
                     setTimeout(() => router.push("/login"), 3000)
                     return
                 }
 
-                setMessage("Setting up your session...")
+                setMessage("Establishing session...")
 
-                // Wait a moment for session to fully establish
-                await new Promise(resolve => setTimeout(resolve, 1500))
-
-                setMessage("Verifying your account...")
-
-                // Session-based auth: Call backend DIRECTLY (not through Next.js proxy)
-                // This is required because the SESSION cookie is set on the backend domain
-                // and the browser will only send it when making requests to that domain
                 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
-                const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
-                    method: "GET",
-                    credentials: "include", // Critical: sends SESSION cookie
-                    headers: {
-                        Accept: "application/json",
-                    },
-                })
+                // STEP 1: Exchange code for session cookie
+                console.log("OAuth: Exchanging code for session...")
+                const exchangeResponse = await fetch(
+                    `${BACKEND_URL}/api/oauth/exchange?code=${code}`,
+                    {
+                        method: "POST",
+                        credentials: "include", // CRITICAL: Receives session cookie
+                    }
+                )
 
-                console.log("OAuth: Direct backend call status:", response.status)
-
-                if (!response.ok) {
-                    throw new Error(`Auth verification failed: ${response.status}`)
+                if (!exchangeResponse.ok) {
+                    throw new Error(`Exchange failed: ${exchangeResponse.status}`)
                 }
 
-                const user = await response.json()
+                const exchangeData = await exchangeResponse.json()
+                console.log("OAuth: Exchange response:", exchangeData)
+
+                if (!exchangeData.success) {
+                    throw new Error(exchangeData.message || "Exchange failed")
+                }
+
+                setMessage("Loading your profile...")
+
+                // STEP 2: Get user data with the new session
+                console.log("OAuth: Fetching user profile...")
+                const userResponse = await fetch(`${BACKEND_URL}/api/auth/me`, {
+                    credentials: "include", // Sends the session cookie
+                })
+
+                if (!userResponse.ok) {
+                    throw new Error("Failed to fetch user profile")
+                }
+
+                const user = await userResponse.json()
                 console.log("OAuth: User authenticated:", user)
 
                 if (user) {
